@@ -1,0 +1,34 @@
+{
+    "name": "digit-soft/laravel-token-auth",
+    "description": "Laravel token auth cached.",
+    "keywords": ["laravel token auth", "auth", "tokens", "stateless auth"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Digit",
+            "email": "digit.vova@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.1",
+        "laravel/framework": "~5.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "DigitSoft\\LaravelTokenAuth\\": "src/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
+        },
+        "laravel": {
+            "providers": [
+                "DigitSoft\\LaravelTokenAuth\\AuthServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
