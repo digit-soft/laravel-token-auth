@@ -1,6 +1,8 @@
 <?php
 namespace DigitSoft\LaravelTokenAuth;
 
-class AuthServiceProvider
+use Illuminate\Support\ServiceProvider;
+
+class AuthServiceProvider extends ServiceProvider
 {
 }
