@@ -6,7 +6,6 @@ use DigitSoft\LaravelTokenAuth\Guards\TokenGuard;
 use Illuminate\Auth\AuthManager;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Str;
 
 /**
  * Class AuthServiceProvider
@@ -51,8 +50,7 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->app->singleton('auth.tokencached.storage', function ($app) {
             /** @var Application $app */
-            $storageName = $app['config']['auth-token.storage'];
-            $storageClass = 'DigitSoft\\LaravelTokenAuth\\Storage\\' . Str::ucfirst($storageName);
+            $storageClass = $app['config']['auth-token.storage_class'];
             $storage = new $storageClass($app['config']);
 
             return $storage;
