@@ -94,6 +94,9 @@ class AccessToken implements Jsonable, Arrayable
     public function save()
     {
         //$this->setTtl(config('auth-token.ttl'));
+        if (!isset($this->iat)) {
+            $this->iat = now()->timestamp;
+        }
         static::getTokensStorage()->setToken($this);
     }
 
@@ -121,16 +124,17 @@ class AccessToken implements Jsonable, Arrayable
     {
         try {
             $reflection = $this->reflection ?? $this->reflection = new \ReflectionClass($this);
+            // @codeCoverageIgnoreStart
         } catch (\ReflectionException $exception) {
             return [];
         }
+        // @codeCoverageIgnoreEnd
         $data = [];
         foreach ($reflection->getProperties(\ReflectionProperty::IS_PUBLIC) as $property) {
-            if ($property->isStatic()) {
-                continue;
+            if (!$property->isStatic()) {
+                $propertyName = $property->getName();
+                $data[$propertyName] = $this->{$propertyName};
             }
-            $propertyName = $property->getName();
-            $data[$propertyName] = $this->{$propertyName};
         }
         return $data;
     }
@@ -168,9 +172,10 @@ class AccessToken implements Jsonable, Arrayable
      * Create new token for user
      * @param Authenticatable $user
      * @param string          $client_id
+     * @param bool            $autoTTl
      * @return AccessToken
      */
-    public static function createFor(Authenticatable $user, $client_id = self::CLIENT_ID_DEFAULT)
+    public static function createFor(Authenticatable $user, $client_id = self::CLIENT_ID_DEFAULT, $autoTTl = true)
     {
         do {
             $tokenStr = str_random(60);
@@ -181,7 +186,9 @@ class AccessToken implements Jsonable, Arrayable
             'client_id' => $client_id,
         ];
         $token = static::createTokenObject($data);
-        $token->setTtl(config('auth-token.ttl'));
+        if ($autoTTl) {
+            $token->setTtl(config('auth-token.ttl'));
+        }
         $event = new AccessTokenCreated($token);
         event($event);
         return $token;

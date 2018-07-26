@@ -153,6 +153,10 @@ class Redis implements Storage
      */
     public function setToken($token)
     {
+        if (isset($token->ttl) && $token->ttl <= 0) {
+            $this->removeToken($token);
+            return;
+        }
         $value = $this->serializeData($token->toArray());
         $key = $this->getTokenKey($token);
         if ($token->ttl !== null) {

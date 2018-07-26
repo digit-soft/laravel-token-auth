@@ -20,15 +20,6 @@ trait StorageHelpers
     protected $_userPrefix;
 
     /**
-     * Get token time to live
-     * @return integer
-     */
-    protected function getTtl()
-    {
-        return config('auth-token.ttl', 60);
-    }
-
-    /**
      * Get token storage key
      * @param AccessToken|string $token
      * @return string

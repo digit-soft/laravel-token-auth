@@ -50,15 +50,21 @@ class RedisStoreTest extends TestCase
      */
     public function testTokenInsertAndRead()
     {
-        $token = $this->createAuthToken();
+        $token = $this->createToken();
+        $tokenNoTtl = $this->createToken(null, str_random(60));
         $this->getStorage()->setToken($token);
+        $this->getStorage()->setToken($tokenNoTtl);
         $tokenRead = $this->getStorage()->getToken($token->token);
+        $tokenNoTtlRead = $this->getStorage()->getToken($tokenNoTtl->token);
         $tokenExists = $this->getStorage()->tokenExists($token);
         $tokenReadEmpty = $this->getStorage()->getToken($token->token . "qwerty");
         $this->assertEmpty($tokenReadEmpty, 'False token not found');
         $this->assertInstanceOf(AccessToken::class, $tokenRead, 'Token instance of AccessToken');
+        $this->assertInstanceOf(AccessToken::class, $tokenNoTtlRead, 'Token instance of AccessToken');
         $this->assertTrue($tokenExists, 'Token exists in storage');
-        $this->assertEquals($token->token, $tokenRead->token);
+        $this->assertEquals($token->token, $tokenRead->token, 'Token read successfully');
+        $this->assertEquals($tokenNoTtl->token, $tokenNoTtlRead->token, 'Token without TTL read successfully');
+        $this->assertNull($tokenNoTtl->ttl, 'TTL in token is null');
     }
 
     /**
@@ -66,8 +72,10 @@ class RedisStoreTest extends TestCase
      */
     public function testTokenUserAssign()
     {
-        $token = $this->createAuthToken();
+        $token = $this->createToken();
+        $tokenExpired = $this->createToken(0, str_random(60));
         $this->getStorage()->setToken($token);
+        $this->getStorage()->setToken($tokenExpired);
         $tokens = $this->getStorage()->getUserTokens($this->token_user_id);
         $tokensLoaded = $this->getStorage()->getUserTokens($this->token_user_id, true);
         $tokensEmpty = $this->getStorage()->getUserTokens(0);
@@ -76,11 +84,12 @@ class RedisStoreTest extends TestCase
         $this->assertNotEmpty($tokens, 'User tokens not empty');
         $this->assertEmpty($tokensEmpty, 'Not existent user tokens are empty');
         $this->assertContains($token->token, $tokens, 'User tokens not empty');
+        $this->assertNotContains($tokenExpired->token, $tokens, 'User tokens not contain expired token');
     }
 
     public function testRemoveTokenFromUser()
     {
-        $token = $this->createAuthToken();
+        $token = $this->createToken();
         $this->getStorage()->setToken($token);
         $this->getStorage()->removeToken($token);
         $tokens = $this->getStorage()->getUserTokens($this->token_user_id, false);
@@ -103,7 +112,7 @@ class RedisStoreTest extends TestCase
         return $this->getStorage()->getConnection();
     }
 
-    protected function createAuthToken($ttl = false, $token = null, $user_id = null, $client_id = null)
+    protected function createToken($ttl = false, $token = null, $user_id = null, $client_id = null)
     {
         $ttl = $ttl !== false ? $ttl : $this->token_ttl;
         $token = $token ?? $this->token_id;
