@@ -6,5 +6,5 @@ return array(
     'ttl' => 5,
     'connection' => null,
     'token_prefix' => 'tkn:',
-    'user_prefix' => 'usr:',
+    'user_prefix' => 'usr:tkns:',
 );
