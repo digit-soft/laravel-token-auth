@@ -75,7 +75,7 @@ class AccessToken implements Jsonable, Arrayable
         $this->ttl = $ttl;
         if ($overwriteTimestamps) {
             $this->iat = now()->timestamp;
-            $this->exp = $this->iat + $this->ttl;
+            $this->exp = $this->ttl ? $this->iat + $this->ttl : null;
         }
     }
 
