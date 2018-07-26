@@ -93,7 +93,7 @@ class AccessToken implements Jsonable, Arrayable
      */
     public function save()
     {
-        $this->setTtl(config('auth-token.ttl'));
+        //$this->setTtl(config('auth-token.ttl'));
         static::getTokensStorage()->setToken($this);
     }
 
