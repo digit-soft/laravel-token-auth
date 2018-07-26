@@ -2,52 +2,65 @@
 
 namespace DigitSoft\LaravelTokenAuth\Contracts;
 
+use DigitSoft\LaravelTokenAuth\AccessToken;
+
+/**
+ * Interface Storage
+ * @package DigitSoft\LaravelTokenAuth\Contracts
+ */
 interface Storage
 {
-    const TOKEN_KEY_USER_ID = '_user';
-    const TOKEN_KEY_ROLES   = '_roles';
-    const TOKEN_KEY_RIGHTS  = '_rights';
+    /**
+     * Get user token content
+     * @param string $tokenId
+     * @return AccessToken|null
+     */
+    public function getToken($tokenId);
+
+    /**
+     * Get user tokens content (multiple)
+     * @param string[] $tokenIds
+     * @return AccessToken[]
+     */
+    public function getTokens($tokenIds);
+
+    /**
+     * Set user token content
+     * @param AccessToken $token
+     */
+    public function setToken($token);
+
+    /**
+     * Remove user token and its content
+     * @param AccessToken $token
+     */
+    public function removeToken($token);
+
+    /**
+     * Check that token record exists in storage
+     * @param AccessToken|string $token
+     * @return bool
+     */
+    public function tokenExists($token);
 
     /**
      * Get user tokens list by ID
-     * @param int $userId
-     * @return array
+     * @param int  $userId
+     * @param bool $load
+     * @return array|AccessToken[]
      */
-    public function getUserTokens($userId);
+    public function getUserTokens($userId, $load = false);
 
     /**
      * Set user tokens list
-     * @param int $userId
-     * @param array $tokens
+     * @param int                    $userId
+     * @param AccessToken[]|string[] $tokens
      */
     public function setUserTokens($userId, $tokens = []);
 
     /**
      * Add token to user list
-     * @param int $userId
-     * @param string $token
+     * @param AccessToken $token
      */
-    public function addUserToken($userId, $token);
-
-    /**
-     * Get user token content
-     * @param string $token
-     * @return array|null
-     */
-    public function getToken($token);
-
-    /**
-     * Set user token content
-     * @param string   $token
-     * @param array    $data
-     * @param int|null $userId
-     */
-    public function setToken($token, $data = [], $userId = null);
-
-    /**
-     * Remove user token and its content
-     * @param string $token
-     * @param int|null $userId
-     */
-    public function removeToken($token, $userId = null);
+    public function addUserToken($token);
 }

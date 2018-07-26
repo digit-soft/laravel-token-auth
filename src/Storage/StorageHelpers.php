@@ -2,8 +2,12 @@
 
 namespace DigitSoft\LaravelTokenAuth\Storage;
 
+use DigitSoft\LaravelTokenAuth\AccessToken;
 
-
+/**
+ * Trait StorageHelpers
+ * @package DigitSoft\LaravelTokenAuth\Storage
+ */
 trait StorageHelpers
 {
     /**
@@ -26,17 +30,17 @@ trait StorageHelpers
 
     /**
      * Get token storage key
-     * @param string $token
+     * @param AccessToken|string $token
      * @return string
      */
     protected function getTokenKey($token)
     {
-        return $this->getTokenKeyPrefix() . $token;
+        return $this->getTokenKeyPrefix() . (string)$token;
     }
 
     /**
      * Get token storage keys (multiple)
-     * @param string[] $tokens
+     * @param AccessToken[]|string[] $tokens
      * @return string[]
      */
     protected function getTokenKeys($tokens)
@@ -44,7 +48,7 @@ trait StorageHelpers
         $prefix = $this->getTokenKeyPrefix();
         $keys = [];
         foreach ($tokens as $token) {
-            $keys[$token] = $prefix . $token;
+            $keys[$token] = $prefix . (string)$token;
         }
         return $keys;
     }
@@ -56,7 +60,7 @@ trait StorageHelpers
      */
     protected function getUserKey($userId)
     {
-        return $this->getTokenKeyPrefix() . $userId;
+        return $this->getUserKeyPrefix() . $userId;
     }
 
     /**
@@ -102,5 +106,22 @@ trait StorageHelpers
     {
         $data = @json_decode($dataStr, true);
         return is_array($data) ? $data : null;
+    }
+
+    /**
+     * Convert list with token objects to string array
+     * @param AccessToken[] $tokens
+     * @return string[]
+     */
+    protected function stringifyTokensList($tokens = [], $preserveKeys = true)
+    {
+        $tokenIds = [];
+        $num = 0;
+        foreach ($tokens as $tokenKey => $token) {
+            $key = $preserveKeys ? $tokenKey : $num;
+            $tokenIds[$key] = (string)$token;
+            $num++;
+        }
+        return $tokenIds;
     }
 }

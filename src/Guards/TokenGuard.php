@@ -96,8 +96,8 @@ class TokenGuard implements Guard
         $tokenRequest = $this->getTokenForRequest();
 
         if (!empty($tokenRequest)) {
-            $tokenData = $this->getStorage()->getToken($tokenRequest);
-            $userId = is_array($tokenData) ? $this->getTokenData($tokenData, Storage::TOKEN_KEY_USER_ID) : null;
+            $token = $this->getStorage()->getToken($tokenRequest);
+            $userId = $token !== null ? $token->user_id : null;
         }
         if ($userId !== null) {
             $user = $this->provider->retrieveById($userId);

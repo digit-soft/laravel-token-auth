@@ -2,9 +2,11 @@
 
 namespace DigitSoft\LaravelTokenAuth\Storage;
 
+use DigitSoft\LaravelTokenAuth\AccessToken;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
 use Illuminate\Config\Repository;
 use Illuminate\Redis\RedisManager;
+use Illuminate\Support\Arr;
 
 /**
  * Class Redis
@@ -47,115 +49,157 @@ class Redis implements Storage
      */
     public function getConnection()
     {
-        $this->manager->get('test');
         return $this->manager->connection($this->connection);
     }
 
     /**
      * Get user tokens list by ID
-     * @param int $userId
-     * @return array
+     * @param int  $userId
+     * @param bool $load
+     * @return array|AccessToken[]
      */
-    public function getUserTokens($userId)
+    public function getUserTokens($userId, $load = false)
     {
         $userKey = $this->getUserKey($userId);
         $tokens = $this->getConnection()->lrange($userKey, 0, -1);
         $tokensCount = count($tokens);
-        if (!empty($tokens)) {
-            $this->filterTokens($tokens);
+        if (empty($tokens)) {
+            return [];
         }
+        $this->filterTokens($tokens);
         // Force write user tokens list
         if ($tokensCount !== count($tokens)) {
             $this->setUserTokens($userId, $tokens);
+        }
+        // Load token objects
+        if ($load) {
+            $tokens = $this->getTokens($tokens);
         }
         return $tokens;
     }
 
     /**
      * Set user tokens list
-     * @param int   $userId
-     * @param array $tokens
+     * @param int                    $userId
+     * @param AccessToken[]|string[] $tokens
      */
     public function setUserTokens($userId, $tokens = [])
     {
         $tokens = array_unique($tokens);
         $userKey = $this->getUserKey($userId);
         $this->getConnection()->del([$userKey]);
-        $this->getConnection()->rpush($userKey, $tokens);
+        $tokens = $this->stringifyTokensList($tokens, false);
+        if (!empty($tokens)) {
+            $this->getConnection()->rpush($userKey, $tokens);
+        }
     }
 
     /**
      * Add token to user list
-     * @param int    $userId
-     * @param string $token
+     * @param AccessToken $token
      */
-    public function addUserToken($userId, $token)
+    public function addUserToken($token)
     {
-        $userKey = $this->getUserKey($userId);
-        $this->getConnection()->rpush($userKey, [$token]);
+        $userTokens = $this->getUserTokens($token->user_id, true);
+        $userTokens[] = $token;
+        $maxTime = now()->addYears(10)->timestamp;
+        $userTokens = Arr::sort($userTokens, function ($value) use ($maxTime) {
+            /** @var AccessToken $value */
+            return $value->exp !== null ? $value->exp : $maxTime;
+        });
+        $this->setUserTokens($token->user_id, $userTokens);
     }
 
     /**
      * Get user token content
-     * @param string $token
-     * @return array|null
+     * @param string $tokenId
+     * @return AccessToken|null
      */
-    public function getToken($token)
+    public function getToken($tokenId)
     {
-        $key = $this->getTokenKey($token);
+        $key = $this->getTokenKey($tokenId);
         $dataStr = $this->getConnection()->get($key);
         if (!empty($dataStr) && ($data = $this->unserializeData($dataStr)) !== null) {
-            return $data;
+            return AccessToken::createFromData($data);
         }
         return null;
     }
 
     /**
-     * Set user token content
-     * @param string   $token
-     * @param array    $data
-     * @param int|null $userId
+     * Get user tokens content (multiple)
+     * @param string[] $tokenIds
+     * @return AccessToken[]
      */
-    public function setToken($token, $data = [], $userId = null)
+    public function getTokens($tokenIds)
     {
-        $value = $this->serializeData($data);
-        $key = $this->getTokenKey($token);
-        $ttl = $this->getTtl();
-        $this->getConnection()->setex($key, $ttl, $value);
-        if (isset($userId)) {
-            $userKey = $this->getUserKey($userId);
-            $this->getConnection()->lpush($userKey, [$token]);
+        if (empty($tokenIds)) {
+            return [];
         }
+        $tokenKeys = $this->getTokenKeys($tokenIds);
+        $rows = $this->getConnection()->mget($tokenKeys);
+        $result = [];
+        foreach ($rows as $index => $dataStr) {
+            if (!isset($dataStr) || ($data = $this->unserializeData($dataStr)) === null) {
+                continue;
+            }
+            $result[$tokenIds[$index]] = AccessToken::createFromData($data);
+        }
+        return $result;
+    }
+
+    /**
+     * Set user token content
+     * @param AccessToken $token
+     */
+    public function setToken($token)
+    {
+        $value = $this->serializeData($token->toArray());
+        $key = $this->getTokenKey($token);
+        if ($token->ttl !== null) {
+            $this->getConnection()->setex($key, $token->ttl, $value);
+        } else {
+            $this->getConnection()->set($key, $value);
+        }
+        $this->addUserToken($token);
     }
 
     /**
      * Remove user token and its content
-     * @param string   $token
-     * @param int|null $userId
+     * @param AccessToken $token
      */
-    public function removeToken($token, $userId = null)
+    public function removeToken($token)
     {
         $tokenKey = $this->getTokenKey($token);
         $this->getConnection()->expire($tokenKey, 0);
-        if (isset($userId)) {
-            $userKey = $this->getUserKey($userId);
-            $this->getConnection()->lrem($userKey, 0, $token);
-        }
+        $userKey = $this->getUserKey($token->user_id);
+        $this->getConnection()->lrem($userKey, 0, $token);
+    }
+
+    /**
+     * Check that token record exists in storage
+     * @param string $token
+     * @return bool
+     */
+    public function tokenExists($token)
+    {
+        $key = $this->getTokenKey($token);
+        $exists = (int)$this->getConnection()->exists($key);
+        return $exists > 0;
     }
 
     /**
      * Filter not valid tokens
-     * @param string[] $tokens
+     * @param string[] $tokenIds
      */
-    protected function filterTokens(&$tokens)
+    protected function filterTokens(&$tokenIds)
     {
-        $tokenKeys = $this->getTokenKeys($tokens);
+        $tokenKeys = $this->getTokenKeys($tokenIds);
         $records = $this->getConnection()->mget($tokenKeys);
-        foreach ($tokens as $num => $data) {
+        foreach ($tokenIds as $num => $data) {
             if (!isset($records[$num])) {
-                unset($tokens[$num]);
+                unset($tokenIds[$num]);
             }
         }
-        $tokens = array_values($tokens);
+        $tokenIds = array_values($tokenIds);
     }
 }
