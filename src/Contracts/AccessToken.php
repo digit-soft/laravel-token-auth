@@ -3,6 +3,7 @@
 namespace DigitSoft\LaravelTokenAuth\Contracts;
 
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Http\Request;
 
 /**
  * Interface AccessToken
@@ -74,4 +75,11 @@ interface AccessToken
      * @return AccessToken
      */
     public static function createFromData($data = []);
+
+    /**
+     * Get client ID from request
+     * @param Request $request
+     * @return string
+     */
+    public static function getClientIdFromRequest(Request $request);
 }

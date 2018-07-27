@@ -8,6 +8,7 @@ use DigitSoft\LaravelTokenAuth\Events\AccessTokenCreated;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
+use Illuminate\Http\Request;
 use Illuminate\Queue\SerializesModels;
 
 /**
@@ -225,6 +226,33 @@ class AccessToken implements AccessTokenContract, Jsonable, Arrayable
     public static function createFromData($data = [])
     {
         return app()->make(AccessTokenContract::class, ['config' => $data]);
+    }
+
+    /**
+     * Get client ID from request
+     * @param Request $request
+     * @return string
+     */
+    public static function getClientIdFromRequest(Request $request)
+    {
+        if (($clientId = $request->input(AccessToken::REQUEST_CLIENT_PARAM)) !== null && static::validateClientId($clientId)) {
+            return $clientId;
+        }
+        if (($clientId = $request->header(AccessToken::REQUEST_CLIENT_ID_HEADER)) !== null && static::validateClientId($clientId)) {
+            return $clientId;
+        }
+        return static::CLIENT_ID_DEFAULT;
+    }
+
+    /**
+     * Check that client ID is valid
+     * @param string $client_id
+     * @return bool
+     */
+    protected static function validateClientId($client_id)
+    {
+        $ids = config('auth-token.client_ids', [static::CLIENT_ID_DEFAULT]);
+        return in_array($client_id, $ids);
     }
 
     /**

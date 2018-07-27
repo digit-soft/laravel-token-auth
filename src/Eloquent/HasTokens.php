@@ -4,7 +4,6 @@ namespace DigitSoft\LaravelTokenAuth\Eloquent;
 
 use DigitSoft\LaravelTokenAuth\AccessToken;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
-use Illuminate\Support\Facades\Request;
 
 trait HasTokens
 {
@@ -62,15 +61,6 @@ trait HasTokens
      */
     protected function getClientIdFromRequest()
     {
-        if (($clientId = Request::get(AccessToken::REQUEST_CLIENT_PARAM)) !== null) {
-            return $clientId;
-        }
-        if (($clientId = Request::post(AccessToken::REQUEST_CLIENT_PARAM)) !== null) {
-            return $clientId;
-        }
-        if (($clientId = Request::header(AccessToken::REQUEST_CLIENT_ID_HEADER)) !== null) {
-            return $clientId;
-        }
-        return AccessToken::CLIENT_ID_DEFAULT;
+        return AccessToken::getClientIdFromRequest(app('request'));
     }
 }
