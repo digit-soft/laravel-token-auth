@@ -5,7 +5,9 @@ namespace DigitSoft\LaravelTokenAuth\Tests;
 use DigitSoft\LaravelTokenAuth\AccessToken;
 use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage as StorageContract;
+use DigitSoft\LaravelTokenAuth\Guards\TokenGuard;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 abstract class TestCase extends BaseTestCase
@@ -69,6 +71,14 @@ abstract class TestCase extends BaseTestCase
         return $user;
     }
 
+    /**
+     * Create token object
+     * @param bool        $ttl
+     * @param string|null $token
+     * @param int|null    $user_id
+     * @param string|null $client_id
+     * @return AccessToken
+     */
     protected function createToken($ttl = false, $token = null, $user_id = null, $client_id = null)
     {
         $ttl = $ttl !== false ? $ttl : $this->token_ttl;
@@ -80,8 +90,32 @@ abstract class TestCase extends BaseTestCase
             'token' => $token,
             'client_id' => $client_id,
         ];
-        $token = new AccessToken($data, $this->getStorage());
-        $token->setTtl($ttl, true);
-        return $token;
+        $tokenObject = new AccessToken($data, $this->getStorage());
+        $tokenObject->setTtl($ttl, true);
+        return $tokenObject;
+    }
+
+    /**
+     * Create auth guard
+     * @param Request|null      $request
+     * @param UserProvider|null $userProvider
+     * @return TokenGuard
+     */
+    protected function createGuard(Request $request = null, UserProvider $userProvider = null)
+    {
+        $userProvider = $userProvider ?? $this->createUserProvider();
+        $request = $request ?? new Request();
+        $guard = new TokenGuard($userProvider, $request);
+        return $guard;
+    }
+
+    /**
+     * Create user provider for guard
+     * @return UserProvider
+     */
+    protected function createUserProvider()
+    {
+        $provider = new UserProvider($this->app['hash'], User::class);
+        return $provider;
     }
 }
