@@ -2,11 +2,9 @@
 
 namespace DigitSoft\LaravelTokenAuth\Tests\Unit;
 
-use DigitSoft\LaravelTokenAuth\AccessToken;
 use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
 use DigitSoft\LaravelTokenAuth\Tests\TestCase;
-use DigitSoft\LaravelTokenAuth\Tests\User;
 
 /**
  * Class HasTokensTraitTest
@@ -52,7 +50,10 @@ class HasTokensTraitTest extends TestCase
         $this->app->bind('auth.tokencached.storage', function () use ($storage) { return $storage; });
         $user = $this->createUser();
         $tokenFound = $user->getToken($this->token_client_id);
+        // Assume that $this->token_client_id is DEFAULT CLIENT ID
+        $tokenFoundFromRequest = $user->getToken();
         $this->assertInstanceOf(AccessTokenContract::class, $tokenFound, 'Found token for user');
+        $this->assertInstanceOf(AccessTokenContract::class, $tokenFoundFromRequest, 'Found token for user from request');
     }
 
     public function testCreateUserToken()

@@ -6,6 +6,7 @@ use DigitSoft\LaravelTokenAuth\AccessToken;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
 use DigitSoft\LaravelTokenAuth\Tests\TestCase;
 use DigitSoft\LaravelTokenAuth\Tests\User;
+use Illuminate\Http\Request;
 
 /**
  * Class AccessTokenTest
@@ -118,6 +119,39 @@ class AccessTokenTest extends TestCase
         $tokenRead = $token->getStorage()->getToken($token->token);
         $this->assertInstanceOf(AccessToken::class, $tokenRead, 'Token found');
         $this->assertEquals($tokenRead->token, $token->token, 'Found equal token');
+    }
+
+    public function testRegenerateToken()
+    {
+        $token = $this->createToken(null);
+        $this->configureStorageMockForTokenSave($token->getStorage());
+        $oldToken = $token->token;
+        $token->regenerate(true);
+        $newToken = $token->token;
+        //$token->save();
+        $this->configureStorageMockForTokenGet($token->getStorage(), $token);
+        $tokenRead = $token->getStorage()->getToken($token->token);
+        $this->assertInstanceOf(AccessToken::class, $tokenRead, 'Token found');
+        $this->assertEquals($tokenRead->token, $token->token, 'Found equal token');
+        $this->assertNotEquals($oldToken, $newToken, 'Regenerated token is different');
+    }
+
+    public function testGetClientIdFromRequest()
+    {
+        $clientId = 'api-test';
+        $clientIdFake = 'api-test-2';
+        config(['auth-token.client_ids' => ['api-test']]);
+        $requestGet = new Request([AccessToken::REQUEST_CLIENT_ID_PARAM => $clientId]);
+        $requestPost = new Request([], [AccessToken::REQUEST_CLIENT_ID_PARAM => $clientId]);
+        $requestPost->setMethod(Request::METHOD_POST);
+        $requestHeader = new Request();
+        $requestHeader->headers->set(AccessToken::REQUEST_CLIENT_ID_HEADER, $clientId);
+        $requestEmpty = new Request();
+        $this->assertEquals($clientId, AccessToken::getClientIdFromRequest($requestGet), 'Get client id from GET params');
+        $this->assertEquals($clientId, AccessToken::getClientIdFromRequest($requestPost), 'Get client id from POST params');
+        $this->assertEquals($clientId, AccessToken::getClientIdFromRequest($requestHeader), 'Get client id from headers');
+        $this->assertEquals(AccessToken::CLIENT_ID_DEFAULT, AccessToken::getClientIdFromRequest($requestEmpty), 'Get client id from empty request');
+        $this->assertNotEquals($clientIdFake, AccessToken::getClientIdFromRequest($requestGet));
     }
 
     public function testGetFirstUserTokenAfterSave()
