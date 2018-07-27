@@ -1,4 +1,5 @@
 <?php
+
 namespace DigitSoft\LaravelTokenAuth;
 
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
@@ -39,8 +40,24 @@ class AuthServiceProvider extends ServiceProvider
         $configPath = __DIR__ . '/../config/auth-token.php';
         $this->mergeConfigFrom($configPath, 'auth-token');
 
+        $this->registerTokenClass();
         $this->registerStorage();
         $this->registerTokenGuard();
+    }
+
+    /**
+     * Bind token object builder
+     */
+    protected function registerTokenClass()
+    {
+        $this->app->bind('auth.tokencached.token', function ($app, $params = []) {
+            /** @var Application $app */
+            $tokenClass = $app['config']['auth-token.token_class'];
+            $token = $app->make($tokenClass, $params);
+            return $token;
+        });
+
+        $this->app->alias('auth.tokencached.token', \DigitSoft\LaravelTokenAuth\Contracts\AccessToken::class);
     }
 
     /**

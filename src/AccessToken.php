@@ -2,6 +2,7 @@
 
 namespace DigitSoft\LaravelTokenAuth;
 
+use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
 use DigitSoft\LaravelTokenAuth\Events\AccessTokenCreated;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -13,11 +14,9 @@ use Illuminate\Queue\SerializesModels;
  * Class AccessToken
  * @package DigitSoft\LaravelTokenAuth
  */
-class AccessToken implements Jsonable, Arrayable
+class AccessToken implements AccessTokenContract, Jsonable, Arrayable
 {
     use SerializesModels;
-
-    const CLIENT_ID_DEFAULT = 'api';
 
     /**
      * User ID
@@ -55,14 +54,20 @@ class AccessToken implements Jsonable, Arrayable
      * @var \ReflectionClass
      */
     protected $reflection;
+    /**
+     * @var Storage
+     */
+    protected $storage;
 
     /**
      * Token constructor.
-     * @param array $config
+     * @param array   $config
+     * @param Storage $storage
      */
-    public function __construct($config = [])
+    public function __construct($config = [], Storage $storage)
     {
         $this->configureSelf($config);
+        $this->storage = $storage;
     }
 
     /**
@@ -93,11 +98,10 @@ class AccessToken implements Jsonable, Arrayable
      */
     public function save()
     {
-        //$this->setTtl(config('auth-token.ttl'));
         if (!isset($this->iat)) {
             $this->iat = now()->timestamp;
         }
-        static::getTokensStorage()->setToken($this);
+        $this->storage->setToken($this);
     }
 
     /**
@@ -105,7 +109,7 @@ class AccessToken implements Jsonable, Arrayable
      */
     public function remove()
     {
-        static::getTokensStorage()->removeToken($this);
+        $this->storage->removeToken($this);
     }
 
     /**
@@ -148,15 +152,37 @@ class AccessToken implements Jsonable, Arrayable
     }
 
     /**
+     * Setter for storage
+     * @param Storage $storage
+     */
+    public function setStorage(Storage $storage)
+    {
+        $this->storage = $storage;
+    }
+
+    /**
+     * Getter for storage
+     * @return Storage
+     */
+    public function getStorage()
+    {
+        return $this->storage;
+    }
+
+    /**
      * Get last added user token
      * @param Authenticatable $user
      * @param string          $client_id
+     * @param Storage|null    $storage
      * @return AccessToken|null
      */
-    public static function getFirstFor(Authenticatable $user, $client_id = self::CLIENT_ID_DEFAULT)
+    public static function getFirstFor(Authenticatable $user, $client_id = self::CLIENT_ID_DEFAULT, Storage $storage = null)
     {
+        if ($storage === null) {
+            $storage = app()->make(Storage::class);
+        }
         $userId = $user->getAuthIdentifier();
-        $list = static::getTokensStorage()->getUserTokens($userId, true);
+        $list = $storage->getUserTokens($userId, true);
         if (empty($list)) {
             return null;
         }
@@ -177,15 +203,12 @@ class AccessToken implements Jsonable, Arrayable
      */
     public static function createFor(Authenticatable $user, $client_id = self::CLIENT_ID_DEFAULT, $autoTTl = true)
     {
-        do {
-            $tokenStr = str_random(60);
-        } while (static::getTokensStorage()->tokenExists($tokenStr));
         $data = [
             'user_id' => $user->getAuthIdentifier(),
-            'token' => $tokenStr,
             'client_id' => $client_id,
         ];
-        $token = static::createTokenObject($data);
+        $token = static::createFromData($data);
+        $token->forceUnique();
         if ($autoTTl) {
             $token->setTtl(config('auth-token.ttl'));
         }
@@ -201,7 +224,7 @@ class AccessToken implements Jsonable, Arrayable
      */
     public static function createFromData($data = [])
     {
-        return static::createTokenObject($data);
+        return app()->make(AccessTokenContract::class, ['config' => $data]);
     }
 
     /**
@@ -210,17 +233,6 @@ class AccessToken implements Jsonable, Arrayable
     protected static function getTokensStorage()
     {
         return app('auth.tokencached.storage');
-    }
-
-    /**
-     * Create token object
-     * @param array $config
-     * @return AccessToken
-     */
-    protected static function createTokenObject($config = [])
-    {
-        $className = config('auth-token.token_class');
-        return new $className($config);
     }
 
     /**
@@ -234,5 +246,29 @@ class AccessToken implements Jsonable, Arrayable
                 $this->{$key} = $value;
             }
         }
+    }
+
+    /**
+     * Force token uniqueness
+     * @return $this
+     */
+    protected function forceUnique()
+    {
+        if ($this->token === null) {
+            $this->token = $this->generateTokenId();
+        }
+        while ($this->storage->tokenExists($this->token)) {
+            $this->token = $this->generateTokenId();
+        }
+        return $this;
+    }
+
+    /**
+     * Generate random string
+     * @return string
+     */
+    protected function generateTokenId()
+    {
+        return str_random(config('auth-token.token_length', 60));
     }
 }
