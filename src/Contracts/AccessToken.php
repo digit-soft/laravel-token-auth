@@ -12,6 +12,9 @@ interface AccessToken
 {
     const CLIENT_ID_DEFAULT = 'api';
 
+    const REQUEST_CLIENT_ID_HEADER = 'Client-Id';
+    const REQUEST_CLIENT_PARAM = 'client_id';
+
     /**
      * Set time to live for token
      * @param int  $ttl
