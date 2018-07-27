@@ -228,14 +228,6 @@ class AccessToken implements AccessTokenContract, Jsonable, Arrayable
     }
 
     /**
-     * @return Storage
-     */
-    protected static function getTokensStorage()
-    {
-        return app('auth.tokencached.storage');
-    }
-
-    /**
      * Configure object
      * @param array $config
      */
