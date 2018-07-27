@@ -13,8 +13,8 @@ trait HasTokens
      */
     public function getTokens()
     {
-        $pk = $this->primaryKey;
-        return $this->getTokensStorage()->getUserTokens($pk, true);
+        $id = $this->getAuthIdentifier();
+        return $this->getTokensStorage()->getUserTokens($id, true);
     }
 
     /**
