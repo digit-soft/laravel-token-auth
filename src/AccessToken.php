@@ -116,6 +116,22 @@ class AccessToken implements AccessTokenContract, Jsonable, Arrayable
     /**
      * @inheritdoc
      */
+    public function regenerate($save = false)
+    {
+        if ($save) {
+            $this->remove();
+        }
+        $this->token = null;
+        $this->ensureUnique();
+        $this->setTtl($this->ttl, true);
+        if ($save) {
+            $this->save();
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function toJson($options = 0)
     {
         $data = $this->toArray();
@@ -209,7 +225,7 @@ class AccessToken implements AccessTokenContract, Jsonable, Arrayable
             'client_id' => $client_id,
         ];
         $token = static::createFromData($data);
-        $token->forceUnique();
+        $token->ensureUnique();
         if ($autoTTl) {
             $token->setTtl(config('auth-token.ttl'));
         }
@@ -235,7 +251,7 @@ class AccessToken implements AccessTokenContract, Jsonable, Arrayable
      */
     public static function getClientIdFromRequest(Request $request)
     {
-        if (($clientId = $request->input(AccessToken::REQUEST_CLIENT_PARAM)) !== null && static::validateClientId($clientId)) {
+        if (($clientId = $request->input(AccessToken::REQUEST_CLIENT_ID_PARAM)) !== null && static::validateClientId($clientId)) {
             return $clientId;
         }
         if (($clientId = $request->header(AccessToken::REQUEST_CLIENT_ID_HEADER)) !== null && static::validateClientId($clientId)) {
@@ -272,7 +288,7 @@ class AccessToken implements AccessTokenContract, Jsonable, Arrayable
      * Force token uniqueness
      * @return $this
      */
-    protected function forceUnique()
+    protected function ensureUnique()
     {
         if ($this->token === null) {
             $this->token = $this->generateTokenId();

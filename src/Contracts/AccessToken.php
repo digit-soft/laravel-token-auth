@@ -14,7 +14,7 @@ interface AccessToken
     const CLIENT_ID_DEFAULT = 'api';
 
     const REQUEST_CLIENT_ID_HEADER = 'Client-Id';
-    const REQUEST_CLIENT_PARAM = 'client_id';
+    const REQUEST_CLIENT_ID_PARAM = 'client_id';
 
     /**
      * Set time to live for token
@@ -38,6 +38,12 @@ interface AccessToken
      * Remove token from storage
      */
     public function remove();
+
+    /**
+     * Regenerate token
+     * @param bool $save
+     */
+    public function regenerate($save = false);
 
     /**
      * Setter storage
