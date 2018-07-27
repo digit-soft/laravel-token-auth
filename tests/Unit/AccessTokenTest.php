@@ -21,19 +21,9 @@ class AccessTokenTest extends TestCase
 
     protected $token_user_id;
 
-    protected $token_client_id;
+    protected $token_user_id_fake;
 
-    /**
-     * @inheritdoc
-     */
-    public function __construct(?string $name = null, array $data = [], string $dataName = '')
-    {
-        parent::__construct($name, $data, $dataName);
-        $this->token_id = '4BaoPSOuvasGj55BUJluikbbSC9eoaZk2Z3tI7kQB56hkp7xGNRQxfMfBMB0';
-        $this->token_client_id = AccessToken::CLIENT_ID_DEFAULT;
-        $this->token_user_id = 1;
-        $this->token_ttl = 30;
-    }
+    protected $token_client_id;
 
     public function testCreateFromArray()
     {
@@ -52,11 +42,8 @@ class AccessTokenTest extends TestCase
 
     public function testCreateForUser()
     {
-        $user = new User([
-            'id' => $this->token_user_id,
-            'email' => 'example@example.com',
-            'password' => password_hash('no_password', PASSWORD_BCRYPT),
-        ]);
+        $user = $this->createUser();
+        $this->app->bind('auth.tokencached.storage', function () { return $this->createStorageMock(); });
         $token = AccessToken::createFor($user, $this->token_client_id);
         $this->assertEquals($user->getAuthIdentifier(), $token->user_id, 'User ID is equal');
         $this->assertNotEmpty($token->token, 'Token ID is not empty');
@@ -64,11 +51,7 @@ class AccessTokenTest extends TestCase
 
     public function testSetDifferentTimeToLive()
     {
-        $user = new User([
-            'id' => $this->token_user_id,
-            'email' => 'example@example.com',
-            'password' => password_hash('no_password', PASSWORD_BCRYPT),
-        ]);
+        $user = $this->createUser();
         $token = AccessToken::createFor($user, $this->token_client_id, false);
         $this->assertNull($token->ttl, 'Time to live is NULL');
         $this->assertNull($token->iat, 'Issued at time is NULL');
@@ -116,68 +99,117 @@ class AccessTokenTest extends TestCase
         $this->assertEquals($tokenStr1, $tokenStr2, 'Strings are equal');
     }
 
-    public function testSaveToStorage()
+    public function testSettingStorageToTokenObject()
+    {
+        $token = $this->createToken();
+        $newStorage = $this->createStorageMock();
+        $this->assertNotSame($newStorage, $token->getStorage(), 'Storages are not equal');
+        $token->setStorage($newStorage);
+        $this->assertSame($newStorage, $token->getStorage(), 'Storages are equal');
+    }
+
+    public function testSaveTokenToStorage()
     {
         $token = $this->createToken(null);
+        $this->configureStorageMockForTokenSave($token->getStorage());
+        $this->configureStorageMockForTokenGet($token->getStorage(), $token);
         $token->iat = null;
         $token->save();
-        $getStorage = $this->getNotAccessibleMethod($token, 'getTokensStorage');
-        /** @var Storage $storage */
-        $storage = $getStorage->invoke($token);
-        $this->assertInstanceOf(Storage::class, $storage);
-        $tokenRead = $storage->getToken($token->token);
+        $tokenRead = $token->getStorage()->getToken($token->token);
         $this->assertInstanceOf(AccessToken::class, $tokenRead, 'Token found');
         $this->assertEquals($tokenRead->token, $token->token, 'Found equal token');
+    }
+
+    public function testGetFirstUserTokenAfterSave()
+    {
+        $token = $this->createToken(null);
+        $this->configureStorageMockForTokenSave($token->getStorage());
+        $this->configureStorageMockForTokenGetByUser($token->getStorage(), $token);
+        $token->save();
+        $user = $this->createUser();
+        $user2 = $this->createUser($this->token_user_id_fake);
+        $this->app->bind('auth.tokencached.storage', function () use ($token) { return $token->getStorage(); });
+        $tokenRead = AccessToken::getFirstFor($user, $this->token_client_id);
+        $tokenReadEmpty = AccessToken::getFirstFor($user, $this->token_client_id . '2');
+        $tokenReadEmpty2 = AccessToken::getFirstFor($user2, $this->token_client_id);
+        $this->assertInstanceOf(AccessToken::class, $tokenRead, 'Token found');
+        $this->assertEquals($tokenRead->token, $token->token, 'Found equal token');
+        $this->assertNull($tokenReadEmpty, 'Token for non existing client not found');
+        $this->assertNull($tokenReadEmpty2, 'Token for non existing user not found');
+    }
+
+    public function testRemoveTokenFromStorage()
+    {
+        $token = $this->createToken(null);
+        $this->configureStorageMockForTokenSave($token->getStorage());
+        $this->configureStorageMockForTokenRemove($token->getStorage(), $token);
+        $token->save();
         $token->remove();
-        $tokenReadEmpty = $storage->getToken($token->token);
-        $this->assertNull($tokenReadEmpty, 'Token removed');
-        $storage->setUserTokens($token->user_id, []);
-        $user = new User([
-            'id' => $this->token_user_id,
-            'email' => 'example@example.com',
-            'password' => password_hash('no_password', PASSWORD_BCRYPT),
-        ]);
-        $tokenNew = $this->createToken();
-        $tokenNew->save();
-        $tokenReadNew = AccessToken::getFirstFor($user);
-        $tokenReadNew2 = AccessToken::getFirstFor($user, 'api2');
-        $this->assertInstanceOf(AccessToken::class, $tokenReadNew, 'Token found');
-        $this->assertEquals($tokenReadNew->token, $tokenNew->token, 'Found equal token');
-        $this->assertNull($tokenReadNew2, 'Token for client api2 not found');
-        $tokenNew->remove();
-        $tokenReadNewEmpty = AccessToken::getFirstFor($user);
-        $this->assertNull($tokenReadNewEmpty, 'Token not found');
     }
 
     /**
-     * Create access token
-     * @param bool $ttl
-     * @param null $token
-     * @param null $user_id
-     * @param null $client_id
-     * @return AccessToken|null|string
+     * @return Storage|\PHPUnit\Framework\MockObject\MockObject
      */
-    protected function createToken($ttl = false, $token = null, $user_id = null, $client_id = null)
+    protected function createStorageMock()
     {
-        $ttl = $ttl !== false ? $ttl : $this->token_ttl;
-        $token = $token ?? $this->token_id;
-        $user_id = $user_id ?? $this->token_user_id;
-        $client_id = $client_id ?? $this->token_client_id;
-        $data = [
-            'user_id' => $user_id,
-            'token' => $token,
-            'client_id' => $client_id,
-        ];
-        $token = new AccessToken($data);
-        $token->setTtl($ttl, true);
-        return $token;
+        $object = parent::createStorageMock();
+        $object->expects($this->any())
+            ->method('tokenExists')
+            ->willReturnOnConsecutiveCalls(true, false);
+        return $object;
     }
 
-    protected function getNotAccessibleMethod($object, $methodName)
+    /**
+     * @param Storage|\PHPUnit\Framework\MockObject\MockObject $mock
+     */
+    protected function configureStorageMockForTokenSave($mock)
     {
-        $reflection = new \ReflectionClass($object);
-        $method = $reflection->getMethod($methodName);
-        $method->setAccessible(true);
-        return $method;
+        $mock->expects($this->once())
+            ->method('setToken');
+    }
+
+    /**
+     * @param Storage|\PHPUnit\Framework\MockObject\MockObject $mock
+     * @param AccessToken $token
+     */
+    protected function configureStorageMockForTokenRemove($mock, $token)
+    {
+        $mock->expects($this->once())
+            ->method('removeToken')
+            ->with($token);
+    }
+
+    /**
+     * @param Storage|\PHPUnit\Framework\MockObject\MockObject $mock
+     * @param AccessToken $token
+     */
+    protected function configureStorageMockForTokenGet($mock, $token)
+    {
+        $mock
+            ->expects($this->once())
+            ->method('getToken')
+            ->with($token->token)
+            ->willReturn($token);
+    }
+
+    /**
+     * @param Storage|\PHPUnit\Framework\MockObject\MockObject $mock
+     * @param AccessToken $token
+     */
+    protected function configureStorageMockForTokenGetByUser($mock, $token)
+    {
+        // Three calls for existing client id, not existing client id and not existing user
+        $mock->expects($this->atLeast(3))
+            ->method('getUserTokens')
+            ->withConsecutive(
+                [$this->token_user_id, true],
+                [$this->token_user_id, true],
+                [$this->token_user_id_fake, true]
+            )
+            ->willReturnOnConsecutiveCalls(
+                [$token->token => $token],
+                [$token->token => $token],
+                []
+            );
     }
 }
