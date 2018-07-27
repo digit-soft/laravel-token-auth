@@ -128,16 +128,4 @@ class TokenGuard implements Guard
     {
         $this->user = null;
     }
-
-    /**
-     * Get value from token data
-     * @param array  $data
-     * @param string $key
-     * @param mixed  $default
-     * @return mixed
-     */
-    protected function getTokenData(array $data, $key, $default = null)
-    {
-        return isset($data[$key]) ? $data[$key] : $default;
-    }
 }

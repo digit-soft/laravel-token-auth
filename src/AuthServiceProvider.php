@@ -11,6 +11,7 @@ use Illuminate\Support\ServiceProvider;
 /**
  * Class AuthServiceProvider
  * @package DigitSoft\LaravelTokenAuth
+ * @codeCoverageIgnore
  */
 class AuthServiceProvider extends ServiceProvider
 {
