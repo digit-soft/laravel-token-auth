@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
  */
 class UserProvider extends EloquentUserProvider
 {
-    protected $usersArray = [];
+    public $usersArray = [];
 
     /**
      * @inheritdoc

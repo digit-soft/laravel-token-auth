@@ -20,6 +20,10 @@ abstract class TestCase extends BaseTestCase
 
     protected $token_user_id;
 
+    protected $token_user_email;
+
+    protected $token_user_password;
+
     protected $token_user_id_fake;
 
     protected $token_client_id;
@@ -33,6 +37,8 @@ abstract class TestCase extends BaseTestCase
         $this->token_id = '4BaoPSOuvasGj55BUJluikbbSC9eoaZk2Z3tI7kQB56hkp7xGNRQxfMfBMB0';
         $this->token_client_id = AccessTokenContract::CLIENT_ID_DEFAULT;
         $this->token_user_id = 1;
+        $this->token_user_email = 'example@example.com';
+        $this->token_user_password = 'no_password';
         $this->token_user_id_fake = 0;
         $this->token_ttl = 30;
     }
@@ -65,8 +71,8 @@ abstract class TestCase extends BaseTestCase
         $id = $id ?? $this->token_user_id;
         $user = new User([
             'id' => $id,
-            'email' => 'example@example.com',
-            'password' => Hash::make('no_password'),
+            'email' => $this->token_user_email,
+            'password' => Hash::make($this->token_user_password),
         ]);
         return $user;
     }
