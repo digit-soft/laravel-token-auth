@@ -36,7 +36,7 @@ interface AccessToken extends Jsonable, Arrayable
     public function isExpired();
 
     /**
-     * Check that this is not guest token
+     * Check that this is guest token
      * @return bool
      */
     public function isGuest();

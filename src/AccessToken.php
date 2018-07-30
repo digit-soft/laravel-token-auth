@@ -91,12 +91,12 @@ class AccessToken implements AccessTokenContract
     }
 
     /**
-     * Check that this is not guest token
+     * Check that this is guest token
      * @return bool
      */
     public function isGuest()
     {
-        return !empty($this->user_id);
+        return empty($this->user_id);
     }
 
     /**
