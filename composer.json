@@ -1,5 +1,6 @@
 {
     "name": "digit-soft/laravel-token-auth",
+    "version": "1.1.0",
     "description": "Laravel token auth cached.",
     "keywords": ["laravel token auth", "auth", "tokens", "stateless auth"],
     "license": "MIT",
