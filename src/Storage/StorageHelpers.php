@@ -62,7 +62,7 @@ trait StorageHelpers
      */
     protected function getUserTokenKey($token, $user_id = null)
     {
-        $user_id = $user_id === null && $token instanceof AccessToken ? $token->user_id : null;
+        $user_id = $user_id === null && $token instanceof AccessToken ? $token->user_id : $user_id;
         return $this->getUserKey($user_id) . ':' . (string)$token;
     }
 
@@ -109,23 +109,5 @@ trait StorageHelpers
     {
         $data = @json_decode($dataStr, true);
         return is_array($data) ? $data : null;
-    }
-
-    /**
-     * Convert list with token objects to string array
-     * @param \DigitSoft\LaravelTokenAuth\Contracts\AccessToken[] $tokens
-     * @param bool                                                $preserveKeys
-     * @return string[]
-     */
-    protected function stringifyTokensList($tokens = [], $preserveKeys = true)
-    {
-        $tokenIds = [];
-        $num = 0;
-        foreach ($tokens as $tokenKey => $token) {
-            $key = $preserveKeys ? $tokenKey : $num;
-            $tokenIds[$key] = (string)$token;
-            $num++;
-        }
-        return $tokenIds;
     }
 }
