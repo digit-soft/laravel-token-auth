@@ -2,10 +2,9 @@
 
 namespace DigitSoft\LaravelTokenAuth\Tests\Unit;
 
-use DigitSoft\LaravelTokenAuth\AccessToken;
+use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
 use DigitSoft\LaravelTokenAuth\Tests\TestCase;
-use DigitSoft\LaravelTokenAuth\Tests\User;
 use Illuminate\Http\Request;
 
 /**
@@ -34,7 +33,7 @@ class AccessTokenTest extends TestCase
             'ttl' => $this->token_ttl,
             'client_id' => $this->token_client_id,
         ];
-        $token = AccessToken::createFromData($data);
+        $token = \AccessToken::createFromData($data);
         $this->assertEquals($data['token'], $token->token, 'Token ID is equal');
         $this->assertEquals($data['user_id'], $token->user_id, 'User ID is equal');
         $this->assertEquals($data['ttl'], $token->ttl, 'Time to live is equal');
@@ -44,8 +43,8 @@ class AccessTokenTest extends TestCase
     public function testCreateForUser()
     {
         $user = $this->createUser();
-        $this->app->bind('auth.tokencached.storage', function () { return $this->createStorageMock(); });
-        $token = AccessToken::createFor($user, $this->token_client_id);
+        $this->app->bind('auth-token.storage', function () { return $this->createStorageMock(); });
+        $token = \AccessToken::createFor($user, $this->token_client_id);
         $this->assertEquals($user->getAuthIdentifier(), $token->user_id, 'User ID is equal');
         $this->assertNotEmpty($token->token, 'Token ID is not empty');
     }
@@ -53,7 +52,7 @@ class AccessTokenTest extends TestCase
     public function testSetDifferentTimeToLive()
     {
         $user = $this->createUser();
-        $token = AccessToken::createFor($user, $this->token_client_id, false);
+        $token = \AccessToken::createFor($user, $this->token_client_id, false);
         $this->assertNull($token->ttl, 'Time to live is NULL');
         $this->assertNull($token->iat, 'Issued at time is NULL');
         $this->assertNull($token->exp, 'Expire time is NULL');
@@ -117,7 +116,7 @@ class AccessTokenTest extends TestCase
         $token->iat = null;
         $token->save();
         $tokenRead = $token->getStorage()->getToken($token->token);
-        $this->assertInstanceOf(AccessToken::class, $tokenRead, 'Token found');
+        $this->assertInstanceOf(AccessTokenContract::class, $tokenRead, 'Token found');
         $this->assertEquals($tokenRead->token, $token->token, 'Found equal token');
     }
 
@@ -131,7 +130,7 @@ class AccessTokenTest extends TestCase
         //$token->save();
         $this->configureStorageMockForTokenGet($token->getStorage(), $token);
         $tokenRead = $token->getStorage()->getToken($token->token);
-        $this->assertInstanceOf(AccessToken::class, $tokenRead, 'Token found');
+        $this->assertInstanceOf(AccessTokenContract::class, $tokenRead, 'Token found');
         $this->assertEquals($tokenRead->token, $token->token, 'Found equal token');
         $this->assertNotEquals($oldToken, $newToken, 'Regenerated token is different');
     }
@@ -141,17 +140,17 @@ class AccessTokenTest extends TestCase
         $clientId = 'api-test';
         $clientIdFake = 'api-test-2';
         config(['auth-token.client_ids' => ['api-test']]);
-        $requestGet = new Request([AccessToken::REQUEST_CLIENT_ID_PARAM => $clientId]);
-        $requestPost = new Request([], [AccessToken::REQUEST_CLIENT_ID_PARAM => $clientId]);
+        $requestGet = new Request([AccessTokenContract::REQUEST_CLIENT_ID_PARAM => $clientId]);
+        $requestPost = new Request([], [AccessTokenContract::REQUEST_CLIENT_ID_PARAM => $clientId]);
         $requestPost->setMethod(Request::METHOD_POST);
         $requestHeader = new Request();
-        $requestHeader->headers->set(AccessToken::REQUEST_CLIENT_ID_HEADER, $clientId);
+        $requestHeader->headers->set(AccessTokenContract::REQUEST_CLIENT_ID_HEADER, $clientId);
         $requestEmpty = new Request();
-        $this->assertEquals($clientId, AccessToken::getClientIdFromRequest($requestGet), 'Get client id from GET params');
-        $this->assertEquals($clientId, AccessToken::getClientIdFromRequest($requestPost), 'Get client id from POST params');
-        $this->assertEquals($clientId, AccessToken::getClientIdFromRequest($requestHeader), 'Get client id from headers');
-        $this->assertEquals(AccessToken::CLIENT_ID_DEFAULT, AccessToken::getClientIdFromRequest($requestEmpty), 'Get client id from empty request');
-        $this->assertNotEquals($clientIdFake, AccessToken::getClientIdFromRequest($requestGet));
+        $this->assertEquals($clientId, \AccessToken::getClientIdFromRequest($requestGet), 'Get client id from GET params');
+        $this->assertEquals($clientId, \AccessToken::getClientIdFromRequest($requestPost), 'Get client id from POST params');
+        $this->assertEquals($clientId, \AccessToken::getClientIdFromRequest($requestHeader), 'Get client id from headers');
+        $this->assertEquals(\AccessToken::getDefaultClientId(), \AccessToken::getClientIdFromRequest($requestEmpty), 'Get client id from empty request');
+        $this->assertNotEquals($clientIdFake, \AccessToken::getClientIdFromRequest($requestGet));
     }
 
     public function testGetFirstUserTokenAfterSave()
@@ -162,11 +161,11 @@ class AccessTokenTest extends TestCase
         $token->save();
         $user = $this->createUser();
         $user2 = $this->createUser($this->token_user_id_fake);
-        $this->app->bind('auth.tokencached.storage', function () use ($token) { return $token->getStorage(); });
-        $tokenRead = AccessToken::getFirstFor($user, $this->token_client_id);
-        $tokenReadEmpty = AccessToken::getFirstFor($user, $this->token_client_id . '2');
-        $tokenReadEmpty2 = AccessToken::getFirstFor($user2, $this->token_client_id);
-        $this->assertInstanceOf(AccessToken::class, $tokenRead, 'Token found');
+        $this->app->bind('auth-token.storage', function () use ($token) { return $token->getStorage(); });
+        $tokenRead = \AccessToken::getFirstFor($user, $this->token_client_id);
+        $tokenReadEmpty = \AccessToken::getFirstFor($user, $this->token_client_id . '2');
+        $tokenReadEmpty2 = \AccessToken::getFirstFor($user2, $this->token_client_id);
+        $this->assertInstanceOf(AccessTokenContract::class, $tokenRead, 'Token found');
         $this->assertEquals($tokenRead->token, $token->token, 'Found equal token');
         $this->assertNull($tokenReadEmpty, 'Token for non existing client not found');
         $this->assertNull($tokenReadEmpty2, 'Token for non existing user not found');
@@ -204,7 +203,7 @@ class AccessTokenTest extends TestCase
 
     /**
      * @param Storage|\PHPUnit\Framework\MockObject\MockObject $mock
-     * @param AccessToken $token
+     * @param AccessTokenContract $token
      */
     protected function configureStorageMockForTokenRemove($mock, $token)
     {
@@ -215,7 +214,7 @@ class AccessTokenTest extends TestCase
 
     /**
      * @param Storage|\PHPUnit\Framework\MockObject\MockObject $mock
-     * @param AccessToken $token
+     * @param AccessTokenContract $token
      */
     protected function configureStorageMockForTokenGet($mock, $token)
     {
@@ -228,7 +227,7 @@ class AccessTokenTest extends TestCase
 
     /**
      * @param Storage|\PHPUnit\Framework\MockObject\MockObject $mock
-     * @param AccessToken $token
+     * @param AccessTokenContract $token
      */
     protected function configureStorageMockForTokenGetByUser($mock, $token)
     {

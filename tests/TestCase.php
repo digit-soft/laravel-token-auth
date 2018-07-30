@@ -2,12 +2,15 @@
 
 namespace DigitSoft\LaravelTokenAuth\Tests;
 
+use DigitSoft\LaravelTokenAuth\AuthServiceProvider;
+use \DigitSoft\LaravelTokenAuth\Facades\AccessToken as AToken;
 use DigitSoft\LaravelTokenAuth\AccessToken;
 use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage as StorageContract;
 use DigitSoft\LaravelTokenAuth\Guards\TokenGuard;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\Facades\Hash;
 
 abstract class TestCase extends BaseTestCase
@@ -35,12 +38,20 @@ abstract class TestCase extends BaseTestCase
     {
         parent::__construct($name, $data, $dataName);
         $this->token_id = '4BaoPSOuvasGj55BUJluikbbSC9eoaZk2Z3tI7kQB56hkp7xGNRQxfMfBMB0';
-        $this->token_client_id = AccessTokenContract::CLIENT_ID_DEFAULT;
         $this->token_user_id = 1;
         $this->token_user_email = 'example@example.com';
         $this->token_user_password = 'no_password';
         $this->token_user_id_fake = 0;
         $this->token_ttl = 30;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function setUp()
+    {
+        parent::setUp();
+        $this->token_client_id = AToken::getDefaultClientId();
     }
 
     /**
@@ -96,7 +107,7 @@ abstract class TestCase extends BaseTestCase
             'token' => $token,
             'client_id' => $client_id,
         ];
-        $tokenObject = new AccessToken($data, $this->getStorage());
+        $tokenObject = new AccessToken($this->getStorage(), $data);
         $tokenObject->setTtl($ttl, true);
         return $tokenObject;
     }
