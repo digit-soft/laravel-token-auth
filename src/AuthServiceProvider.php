@@ -2,9 +2,12 @@
 
 namespace DigitSoft\LaravelTokenAuth;
 
+use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
+use DigitSoft\LaravelTokenAuth\Facades\AccessToken as AToken;
 use DigitSoft\LaravelTokenAuth\Guards\TokenGuard;
 use Illuminate\Auth\AuthManager;
+use Illuminate\Foundation\AliasLoader;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
@@ -15,6 +18,8 @@ use Illuminate\Support\ServiceProvider;
  */
 class AuthServiceProvider extends ServiceProvider
 {
+    protected $defer = false;
+
     /**
      * Bootstrap the application events.
      *
@@ -41,9 +46,28 @@ class AuthServiceProvider extends ServiceProvider
         $configPath = __DIR__ . '/../config/auth-token.php';
         $this->mergeConfigFrom($configPath, 'auth-token');
 
+        //Register facade alias
+        $this->app->booting(function() {
+            $loader = AliasLoader::getInstance();
+            $loader->alias('AccessToken', AToken::class);
+        });
+
+        $this->registerHelper();
         $this->registerTokenClass();
         $this->registerStorage();
         $this->registerTokenGuard();
+    }
+
+    /**
+     * Register helper class instance
+     */
+    protected function registerHelper()
+    {
+        $this->app->singleton('auth-token', function ($app) {
+            return new AccessTokenHelper($app['config']);
+        });
+
+        $this->app->alias('auth-token', AccessTokenHelper::class);
     }
 
     /**
@@ -51,14 +75,14 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected function registerTokenClass()
     {
-        $this->app->bind('auth.tokencached.token', function ($app, $params = []) {
+        $this->app->bind('auth-token.token', function ($app, $params = []) {
             /** @var Application $app */
             $tokenClass = $app['config']['auth-token.token_class'];
             $token = $app->make($tokenClass, $params);
             return $token;
         });
 
-        $this->app->alias('auth.tokencached.token', \DigitSoft\LaravelTokenAuth\Contracts\AccessToken::class);
+        $this->app->alias('auth-token.token', AccessTokenContract::class);
     }
 
     /**
@@ -66,7 +90,7 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected function registerStorage()
     {
-        $this->app->singleton('auth.tokencached.storage', function ($app) {
+        $this->app->singleton('auth-token.storage', function ($app) {
             /** @var Application $app */
             $storageClass = $app['config']['auth-token.storage_class'];
             $storage = new $storageClass($app['config']);
@@ -74,7 +98,7 @@ class AuthServiceProvider extends ServiceProvider
             return $storage;
         });
 
-        $this->app->alias('auth.tokencached.storage', Storage::class);
+        $this->app->alias('auth-token.storage', Storage::class);
     }
 
     /**

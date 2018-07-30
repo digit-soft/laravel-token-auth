@@ -4,18 +4,13 @@ namespace DigitSoft\LaravelTokenAuth;
 
 use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
-use DigitSoft\LaravelTokenAuth\Events\AccessTokenCreated;
-use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Contracts\Support\Jsonable;
-use Illuminate\Http\Request;
 use Illuminate\Queue\SerializesModels;
 
 /**
  * Class AccessToken
  * @package DigitSoft\LaravelTokenAuth
  */
-class AccessToken implements AccessTokenContract, Jsonable, Arrayable
+class AccessToken implements AccessTokenContract
 {
     use SerializesModels;
 
@@ -23,7 +18,7 @@ class AccessToken implements AccessTokenContract, Jsonable, Arrayable
      * User ID
      * @var int
      */
-    public $user_id;
+    public $user_id = self::USER_ID_GUEST;
     /**
      * Token value
      * @var string
@@ -48,7 +43,7 @@ class AccessToken implements AccessTokenContract, Jsonable, Arrayable
      * Token client ID
      * @var string
      */
-    public $client_id = self::CLIENT_ID_DEFAULT;
+    public $client_id;
 
     /**
      * Cached reflection class
@@ -62,11 +57,12 @@ class AccessToken implements AccessTokenContract, Jsonable, Arrayable
 
     /**
      * Token constructor.
-     * @param array   $config
      * @param Storage $storage
+     * @param array   $config
      */
-    public function __construct($config = [], Storage $storage)
+    public function __construct(Storage $storage, $config = [])
     {
+        $this->client_id = Facades\AccessToken::getDefaultClientId();
         $this->configureSelf($config);
         $this->storage = $storage;
     }
@@ -92,6 +88,15 @@ class AccessToken implements AccessTokenContract, Jsonable, Arrayable
     public function isExpired()
     {
         return isset($this->ttl) && isset($this->exp) && $this->exp < now()->timestamp;
+    }
+
+    /**
+     * Check that this is not guest token
+     * @return bool
+     */
+    public function isGuest()
+    {
+        return !empty($this->user_id);
     }
 
     /**
@@ -122,7 +127,7 @@ class AccessToken implements AccessTokenContract, Jsonable, Arrayable
             $this->remove();
         }
         $this->token = null;
-        $this->ensureUnique();
+        $this->ensureUniqueness();
         $this->setTtl($this->ttl, true);
         if ($save) {
             $this->save();
@@ -187,88 +192,18 @@ class AccessToken implements AccessTokenContract, Jsonable, Arrayable
     }
 
     /**
-     * Get last added user token
-     * @param Authenticatable $user
-     * @param string          $client_id
-     * @param Storage|null    $storage
-     * @return AccessToken|null
+     * Force token unique check and ID regeneration
+     * @return $this
      */
-    public static function getFirstFor(Authenticatable $user, $client_id = self::CLIENT_ID_DEFAULT, Storage $storage = null)
+    public function ensureUniqueness()
     {
-        if ($storage === null) {
-            $storage = app()->make(Storage::class);
+        if ($this->token === null) {
+            $this->token = $this->generateTokenId();
         }
-        $userId = $user->getAuthIdentifier();
-        $list = $storage->getUserTokens($userId, true);
-        if (empty($list)) {
-            return null;
+        while ($this->storage->tokenExists($this->token)) {
+            $this->token = $this->generateTokenId();
         }
-        foreach ($list as $token) {
-            if ($token->client_id === $client_id) {
-                return $token;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Create new token for user
-     * @param Authenticatable $user
-     * @param string          $client_id
-     * @param bool            $autoTTl
-     * @return AccessToken
-     */
-    public static function createFor(Authenticatable $user, $client_id = self::CLIENT_ID_DEFAULT, $autoTTl = true)
-    {
-        $data = [
-            'user_id' => $user->getAuthIdentifier(),
-            'client_id' => $client_id,
-        ];
-        $token = static::createFromData($data);
-        $token->ensureUnique();
-        if ($autoTTl) {
-            $token->setTtl(config('auth-token.ttl'));
-        }
-        $event = new AccessTokenCreated($token);
-        event($event);
-        return $token;
-    }
-
-    /**
-     * Create token instance from data array
-     * @param array $data
-     * @return AccessToken
-     */
-    public static function createFromData($data = [])
-    {
-        return app()->make(AccessTokenContract::class, ['config' => $data]);
-    }
-
-    /**
-     * Get client ID from request
-     * @param Request $request
-     * @return string
-     */
-    public static function getClientIdFromRequest(Request $request)
-    {
-        if (($clientId = $request->input(AccessToken::REQUEST_CLIENT_ID_PARAM)) !== null && static::validateClientId($clientId)) {
-            return $clientId;
-        }
-        if (($clientId = $request->header(AccessToken::REQUEST_CLIENT_ID_HEADER)) !== null && static::validateClientId($clientId)) {
-            return $clientId;
-        }
-        return static::CLIENT_ID_DEFAULT;
-    }
-
-    /**
-     * Check that client ID is valid
-     * @param string $client_id
-     * @return bool
-     */
-    protected static function validateClientId($client_id)
-    {
-        $ids = config('auth-token.client_ids', [static::CLIENT_ID_DEFAULT]);
-        return in_array($client_id, $ids);
+        return $this;
     }
 
     /**
@@ -282,21 +217,6 @@ class AccessToken implements AccessTokenContract, Jsonable, Arrayable
                 $this->{$key} = $value;
             }
         }
-    }
-
-    /**
-     * Force token uniqueness
-     * @return $this
-     */
-    protected function ensureUnique()
-    {
-        if ($this->token === null) {
-            $this->token = $this->generateTokenId();
-        }
-        while ($this->storage->tokenExists($this->token)) {
-            $this->token = $this->generateTokenId();
-        }
-        return $this;
     }
 
     /**

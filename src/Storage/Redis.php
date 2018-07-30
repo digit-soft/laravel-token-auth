@@ -2,11 +2,12 @@
 
 namespace DigitSoft\LaravelTokenAuth\Storage;
 
-use DigitSoft\LaravelTokenAuth\AccessToken;
+use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
 use Illuminate\Config\Repository;
 use Illuminate\Redis\RedisManager;
 use Illuminate\Support\Arr;
+use DigitSoft\LaravelTokenAuth\Facades\AccessToken;
 
 /**
  * Class Redis
@@ -56,7 +57,7 @@ class Redis implements Storage
      * Get user tokens list by ID
      * @param int  $userId
      * @param bool $load
-     * @return array|AccessToken[]
+     * @return array|AccessTokenContract[]
      */
     public function getUserTokens($userId, $load = false)
     {
@@ -81,7 +82,7 @@ class Redis implements Storage
     /**
      * Set user tokens list
      * @param int                    $userId
-     * @param AccessToken[]|string[] $tokens
+     * @param AccessTokenContract[]|string[] $tokens
      */
     public function setUserTokens($userId, $tokens = [])
     {
@@ -96,7 +97,7 @@ class Redis implements Storage
 
     /**
      * Add token to user list
-     * @param AccessToken $token
+     * @param AccessTokenContract $token
      */
     public function addUserToken($token)
     {
@@ -104,7 +105,7 @@ class Redis implements Storage
         $userTokens[] = $token;
         $maxTime = now()->addYears(10)->timestamp;
         $userTokens = Arr::sort($userTokens, function ($value) use ($maxTime) {
-            /** @var AccessToken $value */
+            /** @var AccessTokenContract $value */
             return $value->exp !== null ? $value->exp : $maxTime;
         });
         $this->setUserTokens($token->user_id, $userTokens);
@@ -113,7 +114,7 @@ class Redis implements Storage
     /**
      * Get user token content
      * @param string $tokenId
-     * @return AccessToken|null
+     * @return AccessTokenContract|null
      */
     public function getToken($tokenId)
     {
@@ -128,7 +129,7 @@ class Redis implements Storage
     /**
      * Get user tokens content (multiple)
      * @param string[] $tokenIds
-     * @return AccessToken[]
+     * @return AccessTokenContract[]
      */
     public function getTokens($tokenIds)
     {
@@ -149,7 +150,7 @@ class Redis implements Storage
 
     /**
      * Set user token content
-     * @param AccessToken $token
+     * @param AccessTokenContract $token
      */
     public function setToken($token)
     {
@@ -169,7 +170,7 @@ class Redis implements Storage
 
     /**
      * Remove user token and its content
-     * @param AccessToken $token
+     * @param AccessTokenContract $token
      */
     public function removeToken($token)
     {

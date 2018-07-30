@@ -76,7 +76,7 @@ class TokenGuard implements Guard
      */
     public function getStorage()
     {
-        return app('auth.tokencached.storage');
+        return app()->make(Storage::class);
     }
 
     /**

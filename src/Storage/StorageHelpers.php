@@ -102,6 +102,7 @@ trait StorageHelpers
     /**
      * Convert list with token objects to string array
      * @param AccessToken[] $tokens
+     * @param bool          $preserveKeys
      * @return string[]
      */
     protected function stringifyTokensList($tokens = [], $preserveKeys = true)
