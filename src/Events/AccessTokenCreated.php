@@ -2,7 +2,7 @@
 
 namespace DigitSoft\LaravelTokenAuth\Events;
 
-use DigitSoft\LaravelTokenAuth\AccessToken;
+use DigitSoft\LaravelTokenAuth\Contracts\AccessToken;
 use Illuminate\Queue\SerializesModels;
 
 /**
@@ -15,13 +15,13 @@ class AccessTokenCreated
     use SerializesModels;
 
     /**
-     * @var AccessToken
+     * @var \DigitSoft\LaravelTokenAuth\Contracts\AccessToken
      */
     public $token;
 
     /**
      * AccessTokenCreated constructor.
-     * @param AccessToken $token
+     * @param \DigitSoft\LaravelTokenAuth\Contracts\AccessToken $token
      */
     public function __construct(AccessToken $token)
     {

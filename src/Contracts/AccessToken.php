@@ -2,19 +2,25 @@
 
 namespace DigitSoft\LaravelTokenAuth\Contracts;
 
-use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Http\Request;
+use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Contracts\Support\Jsonable;
 
 /**
  * Interface AccessToken
  * @package DigitSoft\LaravelTokenAuth\Contracts
+ * @property string|null $token  Token value
+ * @property int|null    $user_id  User ID
+ * @property string      $client_id  Token client ID
+ * @property int|null    $iat  Token issued at time
+ * @property int|null    $exp  Token expire time
+ * @property int|null    $ttl  Token time to live
  */
-interface AccessToken
+interface AccessToken extends Jsonable, Arrayable
 {
-    const CLIENT_ID_DEFAULT = 'api';
+    const USER_ID_GUEST = 0;
 
-    const REQUEST_CLIENT_ID_HEADER = 'Client-Id';
-    const REQUEST_CLIENT_ID_PARAM = 'client_id';
+    const REQUEST_CLIENT_ID_HEADER = 'Auth-client-Id';
+    const REQUEST_CLIENT_ID_PARAM = 'auth_client_id';
 
     /**
      * Set time to live for token
@@ -28,6 +34,12 @@ interface AccessToken
      * @return bool
      */
     public function isExpired();
+
+    /**
+     * Check that this is not guest token
+     * @return bool
+     */
+    public function isGuest();
 
     /**
      * Save token to storage
@@ -58,34 +70,8 @@ interface AccessToken
     public function getStorage();
 
     /**
-     * Get last added user token
-     * @param Authenticatable $user
-     * @param string          $client_id
-     * @param Storage|null    $storage
-     * @return AccessToken|null
+     * Force token unique check and ID regeneration
+     * @return $this
      */
-    public static function getFirstFor(Authenticatable $user, $client_id = self::CLIENT_ID_DEFAULT, Storage $storage = null);
-
-    /**
-     * Create new token for user
-     * @param Authenticatable $user
-     * @param string          $client_id
-     * @param bool            $autoTTl
-     * @return AccessToken
-     */
-    public static function createFor(Authenticatable $user, $client_id = self::CLIENT_ID_DEFAULT, $autoTTl = true);
-
-    /**
-     * Create token instance from data array
-     * @param array $data
-     * @return AccessToken
-     */
-    public static function createFromData($data = []);
-
-    /**
-     * Get client ID from request
-     * @param Request $request
-     * @return string
-     */
-    public static function getClientIdFromRequest(Request $request);
+    public function ensureUniqueness();
 }
