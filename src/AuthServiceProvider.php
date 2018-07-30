@@ -46,12 +46,6 @@ class AuthServiceProvider extends ServiceProvider
         $configPath = __DIR__ . '/../config/auth-token.php';
         $this->mergeConfigFrom($configPath, 'auth-token');
 
-        //Register facade alias
-        $this->app->booting(function() {
-            $loader = AliasLoader::getInstance();
-            $loader->alias('AccessToken', AToken::class);
-        });
-
         $this->registerHelper();
         $this->registerTokenClass();
         $this->registerStorage();

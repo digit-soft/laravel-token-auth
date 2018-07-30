@@ -31,7 +31,10 @@
         "laravel": {
             "providers": [
                 "DigitSoft\\LaravelTokenAuth\\AuthServiceProvider"
-            ]
+            ],
+            "aliases": {
+                "AccessToken": "DigitSoft\\LaravelTokenAuth\\Facades\\AccessToken"
+            }
         }
     },
     "config": {
