@@ -1,6 +1,6 @@
 # Token auth for Laravel 5.6+
 
-_Comonent uses Redis to store token information_
+_Component uses Redis to store token information_
 
 ### Install
 ```
