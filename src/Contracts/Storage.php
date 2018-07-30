@@ -2,8 +2,6 @@
 
 namespace DigitSoft\LaravelTokenAuth\Contracts;
 
-use DigitSoft\LaravelTokenAuth\AccessToken;
-
 /**
  * Interface Storage
  * @package DigitSoft\LaravelTokenAuth\Contracts
@@ -44,23 +42,17 @@ interface Storage
     public function tokenExists($token);
 
     /**
-     * Get user tokens list by ID
-     * @param int  $userId
+     * Get user => token assignment list
+     * @param int  $user_id
      * @param bool $load
-     * @return array|AccessToken[]
+     * @return AccessToken[]
      */
-    public function getUserTokens($userId, $load = false);
+    public function getUserTokens($user_id, $load = false);
 
     /**
-     * Set user tokens list
-     * @param int                    $userId
-     * @param AccessToken[]|string[] $tokens
+     * Set user => token assignment list
+     * @param int           $user_id
+     * @param AccessToken[] $tokens
      */
-    public function setUserTokens($userId, $tokens = []);
-
-    /**
-     * Add token to user list
-     * @param AccessToken $token
-     */
-    public function addUserToken($token);
+    public function setUserTokens($user_id, $tokens = []);
 }

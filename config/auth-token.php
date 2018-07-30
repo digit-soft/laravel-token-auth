@@ -56,7 +56,7 @@ return array(
     |
     | Prefix used to generate keys for user => token assign entries in storage
     */
-    'user_prefix' => 'usr:tkns:',
+    'user_prefix' => 'tkn:usr:',
     /*
     |--------------------------------------------------------------------------
     | Valid client identifiers
