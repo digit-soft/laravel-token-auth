@@ -51,6 +51,7 @@ class RedisStoreTest extends TestCase
         $this->assertEquals($token->token, $tokenRead->token, 'Token read successfully');
         $this->assertEquals($tokenNoTtl->token, $tokenNoTtlRead->token, 'Token without TTL read successfully');
         $this->assertNull($tokenNoTtl->ttl, 'TTL in token is null');
+        $this->getStorage()->removeToken($tokenNoTtl);
     }
 
     /**
