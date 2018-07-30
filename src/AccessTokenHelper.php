@@ -53,10 +53,10 @@ class AccessTokenHelper
      * Create new token for user
      * @param \Illuminate\Contracts\Auth\Authenticatable $user
      * @param string                                     $client_id
-     * @param bool                                       $autoTTl
+     * @param bool                                       $autoTtl
      * @return Contracts\AccessToken
      */
-    public function createFor(Authenticatable $user, $client_id = null, $autoTTl = true)
+    public function createFor(Authenticatable $user, $client_id = null, $autoTtl = true)
     {
         if ($client_id === null) {
             $client_id = $this->getDefaultClientId();
@@ -67,7 +67,32 @@ class AccessTokenHelper
         ];
         $token = $this->createFromData($data);
         $token->ensureUniqueness();
-        if ($autoTTl) {
+        if ($autoTtl) {
+            $token->setTtl(config('auth-token.ttl'));
+        }
+        $event = new AccessTokenCreated($token);
+        event($event);
+        return $token;
+    }
+
+    /**
+     * Create new token for guest
+     * @param string|null $client_id
+     * @param bool        $autoTtl
+     * @return Contracts\AccessToken
+     */
+    public function createForGuest($client_id = null, $autoTtl = true)
+    {
+        if ($client_id === null) {
+            $client_id = $this->getDefaultClientId();
+        }
+        $data = [
+            'user_id' => AccessTokenContract::USER_ID_GUEST,
+            'client_id' => $client_id,
+        ];
+        $token = $this->createFromData($data);
+        $token->ensureUniqueness();
+        if ($autoTtl) {
             $token->setTtl(config('auth-token.ttl'));
         }
         $event = new AccessTokenCreated($token);

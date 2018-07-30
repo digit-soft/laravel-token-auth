@@ -145,15 +145,15 @@ class AccessTokenTest extends TestCase
         $this->assertNotEquals($clientIdFake, AToken::getClientIdFromRequest($requestGet));
     }
 
-    public function testIsGuest()
+    public function testGuestTokenGeneration()
     {
         $user = $this->createUser();
         $tokenUser = AToken::createFor($user);
-        $tokenGuest = AToken::createFromData([
-            'token' => str_random(60),
-        ]);
-        $this->assertFalse($tokenUser->isGuest(), 'Token for user is not for guest');
+        $tokenGuest = AToken::createForGuest();
+        $this->assertFalse($tokenUser->isGuest(), 'Token for user is checking correct');
         $this->assertTrue($tokenGuest->isGuest(), 'Token for guest is checking correct');
+        $this->assertNotEmpty($tokenGuest->token, 'Token for guest is not empty');
+        $this->assertNotNull($tokenGuest->ttl, 'Token for guest has not empty TTL');
     }
 
     public function testGetFirstUserTokenAfterSave()
