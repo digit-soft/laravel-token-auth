@@ -13,17 +13,6 @@ use DigitSoft\LaravelTokenAuth\Tests\TestCase;
  */
 class HasTokensTraitTest extends TestCase
 {
-
-    protected $token_id;
-
-    protected $token_ttl;
-
-    protected $token_user_id;
-
-    protected $token_user_id_fake;
-
-    protected $token_client_id;
-
     public function testGetUserTokens()
     {
         $storage = $this->createStorageMock();
@@ -33,7 +22,7 @@ class HasTokensTraitTest extends TestCase
         $storage->expects($this->at(1))
             ->method('getUserTokens')
             ->willReturn([$this->createToken()]);
-        $this->app->bind('auth-token.storage', function () use ($storage) { return $storage; });
+        $this->bindStorage(function () use ($storage) { return $storage; });
         $user = $this->createUser();
         $tokensEmpty = $user->getTokens();
         $tokensNotEmpty = $user->getTokens();
@@ -47,7 +36,7 @@ class HasTokensTraitTest extends TestCase
         $storage->expects($this->at(0))
             ->method('getUserTokens')
             ->willReturn([$this->createToken()]);
-        $this->app->bind('auth-token.storage', function () use ($storage) { return $storage; });
+        $this->bindStorage(function () use ($storage) { return $storage; });
         $user = $this->createUser();
         $tokenFound = $user->getToken($this->token_client_id);
         // Assume that $this->token_client_id is DEFAULT CLIENT ID
@@ -59,7 +48,7 @@ class HasTokensTraitTest extends TestCase
     public function testCreateUserToken()
     {
         $storage = $this->createStorageMock();
-        $this->app->bind('auth-token.storage', function () use ($storage) { return $storage; });
+        $this->bindStorage(function () use ($storage) { return $storage; });
         $user = $this->createUser();
         $tokenCreated = $user->createToken($this->token_client_id, 99);
         $this->assertInstanceOf(AccessTokenContract::class, $tokenCreated, 'Token class created token for user');

@@ -142,7 +142,7 @@ class TokenGuardTest extends TestCase
             ->willReturnCallback(function ($tokenId) {
                 return $tokenId === $this->token_id ? $this->createToken() : null;
             });
-        $this->app->bind('auth-token.storage', function () use ($storage) { return $storage; });
+        $this->bindStorage(function () use ($storage) { return $storage; });
         $usersProvider = $this->createUserProvider();
         $user = $this->createUser();
         $usersProvider->addUserToArray($user->toArray(), $user->getAuthIdentifier());

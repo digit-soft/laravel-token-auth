@@ -2,15 +2,12 @@
 
 namespace DigitSoft\LaravelTokenAuth\Tests;
 
-use DigitSoft\LaravelTokenAuth\AuthServiceProvider;
 use \DigitSoft\LaravelTokenAuth\Facades\AccessToken as AToken;
 use DigitSoft\LaravelTokenAuth\AccessToken;
-use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage as StorageContract;
 use DigitSoft\LaravelTokenAuth\Guards\TokenGuard;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\Facades\Hash;
 
 abstract class TestCase extends BaseTestCase
@@ -134,5 +131,14 @@ abstract class TestCase extends BaseTestCase
     {
         $provider = new UserProvider($this->app['hash'], User::class);
         return $provider;
+    }
+
+    /**
+     * Bind closure for storage resolving
+     * @param \Closure $callback
+     */
+    protected function bindStorage(\Closure $callback)
+    {
+        $this->app->bind('auth-token.storage', $callback);
     }
 }

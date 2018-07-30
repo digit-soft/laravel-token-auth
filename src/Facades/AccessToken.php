@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static \DigitSoft\LaravelTokenAuth\Contracts\AccessToken createFromData($data = [])
  * @method static string getDefaultClientId()
  * @method static string getClientIdFromRequest(\Illuminate\Http\Request $request)
+ * @codeCoverageIgnore
  */
 class AccessToken extends Facade
 {
