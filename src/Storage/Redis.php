@@ -6,7 +6,6 @@ use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
 use Illuminate\Config\Repository;
 use Illuminate\Redis\RedisManager;
-use Illuminate\Support\Arr;
 use DigitSoft\LaravelTokenAuth\Facades\AccessToken;
 
 /**
@@ -55,22 +54,29 @@ class Redis implements Storage
 
     /**
      * Get user tokens list by ID
-     * @param int  $userId
+     * @param int  $user_id
      * @param bool $load
-     * @return array|AccessTokenContract[]
+     * @return AccessTokenContract[]
      */
-    public function getUserTokens($userId, $load = false)
+    public function getUserTokens($user_id, $load = false)
     {
-        $userKey = $this->getUserKey($userId);
-        $tokens = $this->getConnection()->lrange($userKey, 0, -1);
-        $tokensCount = count($tokens);
+        $userKey = $this->getUserKey($user_id);
+        $tokens = $this->getConnection()->keys($userKey . ':*');
+        $prefixLn = strlen($userKey) + 1;
+        array_walk($tokens, function (&$value) use ($prefixLn) {
+            $value = substr($value, $prefixLn);
+        });
         if (empty($tokens)) {
             return [];
         }
-        $this->filterTokens($tokens);
-        // Force write user tokens list
-        if ($tokensCount !== count($tokens)) {
-            $this->setUserTokens($userId, $tokens);
+        $tokensMissing = $this->filterTokens($tokens, true);
+        if (!empty($tokensMissing)) {
+            $keysToRemove = [];
+            foreach ($tokensMissing as $tokenId) {
+                $keysToRemove[] = $this->getUserTokenKey($tokenId, $user_id);
+            }
+            $this->getConnection()->del($keysToRemove);
+            $tokens = array_values(array_diff($tokens, $tokensMissing));
         }
         // Load token objects
         if ($load) {
@@ -80,35 +86,37 @@ class Redis implements Storage
     }
 
     /**
-     * Set user tokens list
-     * @param int                    $userId
-     * @param AccessTokenContract[]|string[] $tokens
+     * Set user => tokens assignments list
+     * @param int                   $user_id
+     * @param AccessTokenContract[] $tokens
      */
-    public function setUserTokens($userId, $tokens = [])
+    public function setUserTokens($user_id, $tokens = [])
     {
-        $tokens = array_unique($tokens);
-        $userKey = $this->getUserKey($userId);
-        $this->getConnection()->del([$userKey]);
-        $tokens = $this->stringifyTokensList($tokens, false);
-        if (!empty($tokens)) {
-            $this->getConnection()->rpush($userKey, $tokens);
+        $existingKeys = $this->getUserTokenStorageKeys($user_id);
+        // Remove old [user => token] keys
+        if (!empty($existingKeys)) {
+            $this->getConnection()->del($existingKeys);
         }
-    }
-
-    /**
-     * Add token to user list
-     * @param AccessTokenContract $token
-     */
-    public function addUserToken($token)
-    {
-        $userTokens = $this->getUserTokens($token->user_id, true);
-        $userTokens[] = $token;
-        $maxTime = now()->addYears(10)->timestamp;
-        $userTokens = Arr::sort($userTokens, function ($value) use ($maxTime) {
-            /** @var AccessTokenContract $value */
-            return $value->exp !== null ? $value->exp : $maxTime;
-        });
-        $this->setUserTokens($token->user_id, $userTokens);
+        if (empty($tokens)) {
+            return;
+        }
+        $tokens = array_unique($tokens);
+        $tokensToSet = [];
+        $tokensToExpire = [];
+        $now = now()->timestamp;
+        /** @var AccessTokenContract $token */
+        foreach ($tokens as $token) {
+            $key = $this->getUserTokenKey($token, $user_id);
+            $value = (string)$token;
+            if (isset($token->exp)) {
+                $tokensToExpire[$key] = $token->exp - $now;
+            }
+            $tokensToSet[$key] = $value;
+        }
+        $this->getConnection()->mset($tokensToSet);
+        foreach ($tokensToExpire as $key => $exp) {
+            $this->getConnection()->expire($key, $exp);
+        }
     }
 
     /**
@@ -162,10 +170,11 @@ class Redis implements Storage
         $key = $this->getTokenKey($token);
         if ($token->ttl !== null) {
             $this->getConnection()->setex($key, $token->ttl, $value);
+            $this->addUserToken($token, $token->ttl);
         } else {
             $this->getConnection()->set($key, $value);
+            $this->addUserToken($token);
         }
-        $this->addUserToken($token);
     }
 
     /**
@@ -176,13 +185,12 @@ class Redis implements Storage
     {
         $tokenKey = $this->getTokenKey($token);
         $this->getConnection()->expire($tokenKey, 0);
-        $userKey = $this->getUserKey($token->user_id);
-        $this->getConnection()->lrem($userKey, 0, $token);
+        $this->removeUserToken($token);
     }
 
     /**
      * Check that token record exists in storage
-     * @param string $token
+     * @param AccessTokenContract|string $token
      * @return bool
      */
     public function tokenExists($token)
@@ -193,18 +201,64 @@ class Redis implements Storage
     }
 
     /**
+     * Add token to user list
+     * @param AccessTokenContract $token
+     * @param int|null            $ttl
+     */
+    protected function addUserToken($token, $ttl = null)
+    {
+        if ($token->isGuest()) {
+            return;
+        }
+        $key = $this->getUserTokenKey($token);
+        if (isset($ttl)) {
+            $this->getConnection()->setex($key, $ttl, (string)$token);
+        } else {
+            $this->getConnection()->set($key, (string)$token);
+        }
+    }
+
+    /**
+     * Remove user => token assignment
+     * @param AccessTokenContract $token
+     */
+    protected function removeUserToken($token)
+    {
+        $key = $this->getUserTokenKey($token);
+        $this->getConnection()->del([$key]);
+    }
+
+    /**
      * Filter not valid tokens
      * @param string[] $tokenIds
+     * @param bool     $returnMissing
+     * @return array
      */
-    protected function filterTokens(&$tokenIds)
+    protected function filterTokens($tokenIds, $returnMissing = false)
     {
         $tokenKeys = $this->getTokenKeys($tokenIds);
         $records = $this->getConnection()->mget($tokenKeys);
+        $missing = [];
+        $existing = [];
         foreach ($tokenIds as $num => $data) {
             if (!isset($records[$num])) {
-                unset($tokenIds[$num]);
+                $missing[] = $tokenIds[$num];
+                continue;
             }
+            $existing[] = $tokenIds[$num];
         }
-        $tokenIds = array_values($tokenIds);
+        return $returnMissing ? $missing : $existing;
+    }
+
+    /**
+     * Get user token keys
+     * @param int $user_id
+     * @return array
+     */
+    protected function getUserTokenStorageKeys($user_id)
+    {
+        $key = $this->getUserKey($user_id);
+        $keys = $this->getConnection()->keys($key . ":*");
+        return $keys;
     }
 }
