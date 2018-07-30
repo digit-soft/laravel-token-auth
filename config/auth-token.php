@@ -65,4 +65,10 @@ return array(
     | List of valid client IDs, used to validate client ID from request
     */
     'client_ids' => ['api'],
+    /*
+    |--------------------------------------------------------------------------
+    | Default client ID
+    |--------------------------------------------------------------------------
+    */
+    'client_id_default' => 'api',
 );
