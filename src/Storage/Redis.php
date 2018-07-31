@@ -161,13 +161,14 @@ class Redis implements Storage
     /**
      * Set user token content
      * @param AccessTokenContract $token
+     * @return bool
      */
     public function setToken($token)
     {
         $ttl = $this->getTokenRealTtl($token);
         if ($ttl <= 0) {
             $this->removeToken($token);
-            return;
+            return false;
         }
         $value = $this->serializeData($token->toArray(true));
         $key = $this->getTokenKey($token);
@@ -178,6 +179,7 @@ class Redis implements Storage
             $this->getConnection()->set($key, $value);
             $this->addUserToken($token);
         }
+        return true;
     }
 
     /**

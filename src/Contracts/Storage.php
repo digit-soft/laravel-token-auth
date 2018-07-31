@@ -25,6 +25,7 @@ interface Storage
     /**
      * Set user token content
      * @param AccessToken $token
+     * @return bool
      */
     public function setToken($token);
 
