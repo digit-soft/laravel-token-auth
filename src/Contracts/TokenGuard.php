@@ -19,4 +19,11 @@ interface TokenGuard extends \Illuminate\Contracts\Auth\Guard
      * @param AccessToken $token
      */
     public function setToken(AccessToken $token);
+
+    /**
+     * Get the token for the current request.
+     *
+     * @return string
+     */
+    public function getTokenForRequest();
 }
