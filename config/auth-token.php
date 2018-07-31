@@ -71,4 +71,11 @@ return array(
     |--------------------------------------------------------------------------
     */
     'client_id_default' => 'api',
+    /*
+    |--------------------------------------------------------------------------
+    | Response header name with token
+    |--------------------------------------------------------------------------
+    | Response header name that will contain user auth token
+    */
+    'response_token_header' => 'Auth-token',
 );
