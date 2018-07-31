@@ -89,7 +89,9 @@ class AuthServiceProvider extends ServiceProvider
         $this->app->singleton('auth-token.storage', function ($app) {
             /** @var Application $app */
             $storageClass = $app['config']['auth-token.storage_class'];
-            $storage = new $storageClass($app['config']);
+            $storage = new $storageClass($app['config'], $app['redis']);
+
+            $app->refresh('redis', $storage, 'setManager');
 
             return $storage;
         });
@@ -102,27 +104,18 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected function registerTokenGuard()
     {
-        $this->app->singleton('auth-token.guard', function ($app, $params = []) {
+        $this->app->bind('auth-token.guard', function ($app, $params = []) {
             /** @var Application $app */
             /** @var AuthManager $auth */
-            if (!isset($params['userProvider'])) {
-                $auth = $app['auth'];
-                $providerName = config('auth.guards.api.provider', null);
-                $params['userProvider'] = $auth->createUserProvider($providerName);
+            $guard = $auth->guard('api');
+            if (!$guard instanceof TokenGuardContract) {
+                throw new \Exception('Guard "api" has invalid configuration');
             }
-            if (!isset($params['request'])) {
-                $params['request'] = $app['request'];
-            }
-            $guard = $app->make(TokenGuard::class, $params);
-
-            $app->refresh('request', $guard, 'setRequest');
-
             return $guard;
         });
 
         $this->app->alias('auth-token.guard', TokenGuardContract::class);
 
-        $this->app->alias('auth-token.storage', Storage::class);
         $this->app->resolving('auth', function ($auth) {
             /** @var AuthManager $auth */
             $auth->extend('token-cached', function ($app, $name, $config) {
@@ -130,10 +123,15 @@ class AuthServiceProvider extends ServiceProvider
                 /** @var AuthManager $auth */
                 $auth = $app['auth'];
                 $userProvider = $auth->createUserProvider($config['provider'] ?? null);
-                return $app->make('auth-token.guard', [
+
+                $guard = $app->make(TokenGuard::class, [
                     'userProvider' => $userProvider,
                     'request' => $app['request'],
                 ]);
+
+                $app->refresh('request', $guard, 'setRequest');
+
+                return $guard;
             });
         });
     }
