@@ -164,7 +164,10 @@ class TokenSessionHandler implements SessionHandlerInterface
         }
         // We will use serialize/unserialize because of laravel use it internally to handle session data
         // instead of standard PHP session_encode()/session_decode()
-        $session = unserialize($session_data);
+        $session = @unserialize($session_data);
+        if (null === $session) {
+            return serialize([]);
+        }
         foreach ($remove as $key) {
             Arr::forget($session, $key);
         }
