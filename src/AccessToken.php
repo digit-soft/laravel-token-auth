@@ -68,6 +68,7 @@ class AccessToken implements AccessTokenContract
     public function __construct(Storage $storage, $config = [])
     {
         $this->client_id = Facades\AccessToken::getDefaultClientId();
+        $this->session = serialize([]);
         $this->configureSelf($config);
         $this->storage = $storage;
     }
