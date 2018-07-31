@@ -59,6 +59,11 @@ class AccessToken implements AccessTokenContract
      * @var Storage
      */
     protected $storage;
+    /**
+     * Guarded properties
+     * @var array
+     */
+    protected $guarded = ['session'];
 
     /**
      * Token constructor.
@@ -163,8 +168,8 @@ class AccessToken implements AccessTokenContract
         // @codeCoverageIgnoreEnd
         $data = [];
         foreach ($reflection->getProperties(\ReflectionProperty::IS_PUBLIC) as $property) {
-            if (!$property->isStatic()) {
-                $propertyName = $property->getName();
+            $propertyName = $property->getName();
+            if (!$property->isStatic() && !in_array($propertyName, $this->guarded)) {
                 $data[$propertyName] = $this->{$propertyName};
             }
         }
@@ -172,6 +177,7 @@ class AccessToken implements AccessTokenContract
     }
 
     /**
+     * Return object string representation
      * @return string
      */
     public function __toString()
@@ -219,7 +225,7 @@ class AccessToken implements AccessTokenContract
     protected function configureSelf($config = [])
     {
         foreach ($config as $key => $value) {
-            if (property_exists($this, $key)) {
+            if (property_exists($this, $key) && !in_array($key, $this->guarded)) {
                 $this->{$key} = $value;
             }
         }
