@@ -14,11 +14,6 @@ use SessionHandlerInterface;
 class TokenSessionHandler implements SessionHandlerInterface
 {
     /**
-     * Token guard
-     * @var TokenGuard
-     */
-    protected $guard;
-    /**
      * App config repository
      * @var Repository
      */
@@ -26,12 +21,10 @@ class TokenSessionHandler implements SessionHandlerInterface
 
     /**
      * TokenSessionHandler constructor.
-     * @param \DigitSoft\LaravelTokenAuth\Contracts\TokenGuard $guard
-     * @param \Illuminate\Config\Repository                    $config
+     * @param \Illuminate\Config\Repository $config
      */
-    public function __construct(TokenGuard $guard, Repository $config)
+    public function __construct(Repository $config)
     {
-        $this->guard = $guard;
         $this->config = $config;
     }
 
@@ -111,7 +104,7 @@ class TokenSessionHandler implements SessionHandlerInterface
      */
     public function read($session_id)
     {
-        $token = $this->guard->token();
+        $token = $this->getToken();
         if ($token !== null) {
             return $token->session;
         }
@@ -148,7 +141,7 @@ class TokenSessionHandler implements SessionHandlerInterface
      */
     protected function saveSessionData($session_data)
     {
-        $token = $this->guard->token();
+        $token = $this->getToken();
         if ($token !== null && $token->session !== $session_data) {
             $token->session = $session_data !== '' ? $session_data : null;
             $token->save();
@@ -177,5 +170,18 @@ class TokenSessionHandler implements SessionHandlerInterface
         }
         $session_data = serialize($session);
         return $session_data;
+    }
+
+    /**
+     * Get current token to save data
+     * @return \DigitSoft\LaravelTokenAuth\Contracts\AccessToken|null
+     */
+    protected function getToken()
+    {
+        $guard = \Auth::guard();
+        if (!$guard instanceof TokenGuard || ($token = $guard->token()) === null) {
+            return null;
+        }
+        return $token;
     }
 }
