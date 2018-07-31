@@ -2,12 +2,17 @@
 
 namespace DigitSoft\LaravelTokenAuth\Guards;
 
+use DigitSoft\LaravelTokenAuth\Contracts\AccessToken;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
 use Illuminate\Auth\GuardHelpers;
-use Illuminate\Contracts\Auth\Guard;
+use DigitSoft\LaravelTokenAuth\Contracts\TokenGuard as Guard;
 use Illuminate\Contracts\Auth\UserProvider;
 use Illuminate\Http\Request;
 
+/**
+ * Class TokenGuard
+ * @package DigitSoft\LaravelTokenAuth\Guards
+ */
 class TokenGuard implements Guard
 {
     /**
@@ -18,6 +23,10 @@ class TokenGuard implements Guard
      * @var string
      */
     protected $inputKey;
+    /**
+     * @var AccessToken
+     */
+    protected $token;
 
     use GuardHelpers;
 
@@ -93,12 +102,9 @@ class TokenGuard implements Guard
         $user = null;
         $userId = null;
 
-        $tokenRequest = $this->getTokenForRequest();
+        $token = $this->token();
+        $userId = $token !== null ? $token->user_id : null;
 
-        if (!empty($tokenRequest)) {
-            $token = $this->getStorage()->getToken($tokenRequest);
-            $userId = $token !== null ? $token->user_id : null;
-        }
         if ($userId !== null) {
             $user = $this->provider->retrieveById($userId);
         }
@@ -107,9 +113,30 @@ class TokenGuard implements Guard
     }
 
     /**
+     * Get access token object for current request
+     * @return AccessToken|null
+     */
+    public function token()
+    {
+        if ($this->token === null && ($tokenRequest = $this->getTokenForRequest()) !== null) {
+            $this->token = $this->getStorage()->getToken($tokenRequest);
+        }
+        return $this->token;
+    }
+
+    /**
+     * Set token object
+     * @param AccessToken $token
+     */
+    public function setToken(AccessToken $token)
+    {
+        $this->token = $token;
+    }
+
+    /**
      * Validate a user's credentials.
      *
-     * @param  array $credentials
+     * @param array $credentials
      * @return bool
      */
     public function validate(array $credentials = [])
@@ -126,6 +153,7 @@ class TokenGuard implements Guard
      */
     protected function reset()
     {
+        $this->token = null;
         $this->user = null;
     }
 }
