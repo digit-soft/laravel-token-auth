@@ -182,8 +182,24 @@ class TokenSessionHandler implements SessionHandlerInterface
     protected function getToken()
     {
         $guard = \Auth::guard();
-        if (!$guard instanceof TokenGuard || ($token = $guard->token()) === null) {
+        if (!$guard instanceof TokenGuard || ($token = $this->getTokenOrCreate($guard)) === null) {
             return null;
+        }
+        return $token;
+    }
+
+    /**
+     * Get user token or create new for guest
+     * @param TokenGuard $guard
+     * @return \DigitSoft\LaravelTokenAuth\Contracts\AccessToken|null
+     */
+    protected function getTokenOrCreate(TokenGuard $guard)
+    {
+        $autoCreate = $this->config->get('auth-token.session_token_autocreate', false);
+        $token = $guard->token();
+        if ($autoCreate && $token === null) {
+            $token = \AccessToken::createForGuest();
+            $guard->setToken($token);
         }
         return $token;
     }
