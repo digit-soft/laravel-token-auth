@@ -4,11 +4,12 @@ namespace DigitSoft\LaravelTokenAuth;
 
 use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
-use DigitSoft\LaravelTokenAuth\Facades\AccessToken as AToken;
+use DigitSoft\LaravelTokenAuth\Contracts\TokenGuard as TokenGuardContract;
 use DigitSoft\LaravelTokenAuth\Guards\TokenGuard;
+use DigitSoft\LaravelTokenAuth\Session\TokenSessionHandler;
 use Illuminate\Auth\AuthManager;
-use Illuminate\Foundation\AliasLoader;
 use Illuminate\Foundation\Application;
+use Illuminate\Session\SessionManager;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -50,6 +51,7 @@ class AuthServiceProvider extends ServiceProvider
         $this->registerTokenClass();
         $this->registerStorage();
         $this->registerTokenGuard();
+        $this->registerSessionHandler();
     }
 
     /**
@@ -100,20 +102,52 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected function registerTokenGuard()
     {
-        $this->app->resolving('auth', function ($auth){
+        $this->app->singleton('auth-token.guard', function ($app, $params = []) {
+            /** @var Application $app */
+            /** @var AuthManager $auth */
+            if (!isset($params['userProvider'])) {
+                $auth = $app['auth'];
+                $providerName = config('auth.guards.api.provider', null);
+                $params['userProvider'] = $auth->createUserProvider($providerName);
+            }
+            if (!isset($params['request'])) {
+                $params['request'] = $app['request'];
+            }
+            $guard = $app->make(TokenGuard::class, $params);
+
+            $app->refresh('request', $guard, 'setRequest');
+
+            return $guard;
+        });
+
+        $this->app->alias('auth-token.guard', TokenGuardContract::class);
+
+        $this->app->alias('auth-token.storage', Storage::class);
+        $this->app->resolving('auth', function ($auth) {
             /** @var AuthManager $auth */
             $auth->extend('token-cached', function ($app, $name, $config) {
                 /** @var Application $app */
                 /** @var AuthManager $auth */
                 $auth = $app['auth'];
-                $guard = new TokenGuard(
-                    $auth->createUserProvider($config['provider'] ?? null),
-                    $app['request']
-                );
+                $userProvider = $auth->createUserProvider($config['provider'] ?? null);
+                return $app->make('auth-token.guard', [
+                    'userProvider' => $userProvider,
+                    'request' => $app['request'],
+                ]);
+            });
+        });
+    }
 
-                $app->refresh('request', $guard, 'setRequest');
-
-                return $guard;
+    /**
+     * Register token session handler
+     */
+    public function registerSessionHandler()
+    {
+        $this->app->resolving('session', function ($manager) {
+            /** @var SessionManager $manager */
+            $manager->extend('token-cached', function ($app) {
+                /** @var Application $app */
+                return $app->make(TokenSessionHandler::class);
             });
         });
     }
