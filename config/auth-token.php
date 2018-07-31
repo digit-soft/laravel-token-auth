@@ -35,6 +35,14 @@ return array(
     'ttl' => 31536000,
     /*
     |--------------------------------------------------------------------------
+    | Guest Token TTL
+    |--------------------------------------------------------------------------
+    |
+    | Time To Live for guest token in seconds (default 24 hours)
+    */
+    'ttl_guest' => 86400,
+    /*
+    |--------------------------------------------------------------------------
     | Connection name
     |--------------------------------------------------------------------------
     |
@@ -71,6 +79,14 @@ return array(
     |--------------------------------------------------------------------------
     */
     'client_id_default' => 'api',
+    /*
+    |--------------------------------------------------------------------------
+    | Automatically create guest token with session start
+    |--------------------------------------------------------------------------
+    | Can be useful together with middleware `AddGeneratedTokenToResponse`
+    | which will return created token to user in headers
+    */
+    'session_token_autocreate' => true,
     /*
     |--------------------------------------------------------------------------
     | Response header name with token

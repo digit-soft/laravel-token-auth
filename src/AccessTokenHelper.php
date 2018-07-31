@@ -93,7 +93,7 @@ class AccessTokenHelper
         $token = $this->createFromData($data);
         $token->ensureUniqueness();
         if ($autoTtl) {
-            $token->setTtl(config('auth-token.ttl'));
+            $token->setTtl(config('auth-token.ttl_guest'));
         }
         $event = new AccessTokenCreated($token);
         event($event);
