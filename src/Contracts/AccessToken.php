@@ -75,4 +75,21 @@ interface AccessToken extends Jsonable, Arrayable
      * @return $this
      */
     public function ensureUniqueness();
+
+    /**
+     * Convert the object to its JSON representation.
+     *
+     * @param  int $options
+     * @param bool $withGuarded  Include guarded properties
+     * @return string
+     */
+    public function toJson($options = 0, $withGuarded = false);
+
+    /**
+     * Get the instance as an array.
+     *
+     * @param bool $withGuarded  Include guarded properties
+     * @return array
+     */
+    public function toArray($withGuarded = false);
 }

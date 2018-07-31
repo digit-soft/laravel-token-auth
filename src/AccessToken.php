@@ -148,16 +148,16 @@ class AccessToken implements AccessTokenContract
     /**
      * @inheritdoc
      */
-    public function toJson($options = 0)
+    public function toJson($options = 0, $withGuarded = false)
     {
-        $data = $this->toArray();
+        $data = $this->toArray($withGuarded);
         return json_encode($data, $options);
     }
 
     /**
      * @inheritdoc
      */
-    public function toArray()
+    public function toArray($withGuarded = false)
     {
         try {
             $reflection = $this->reflection ?? $this->reflection = new \ReflectionClass($this);
@@ -169,7 +169,7 @@ class AccessToken implements AccessTokenContract
         $data = [];
         foreach ($reflection->getProperties(\ReflectionProperty::IS_PUBLIC) as $property) {
             $propertyName = $property->getName();
-            if (!$property->isStatic() && !in_array($propertyName, $this->guarded)) {
+            if (!$property->isStatic() && ($withGuarded || !in_array($propertyName, $this->guarded))) {
                 $data[$propertyName] = $this->{$propertyName};
             }
         }
@@ -225,7 +225,7 @@ class AccessToken implements AccessTokenContract
     protected function configureSelf($config = [])
     {
         foreach ($config as $key => $value) {
-            if (property_exists($this, $key) && !in_array($key, $this->guarded)) {
+            if (property_exists($this, $key)) {
                 $this->{$key} = $value;
             }
         }
