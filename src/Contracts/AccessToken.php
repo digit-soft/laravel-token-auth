@@ -14,6 +14,7 @@ use Illuminate\Contracts\Support\Jsonable;
  * @property int|null    $iat  Token issued at time
  * @property int|null    $exp  Token expire time
  * @property int|null    $ttl  Token time to live
+ * @property string|null $session  Token session data
  */
 interface AccessToken extends Jsonable, Arrayable
 {

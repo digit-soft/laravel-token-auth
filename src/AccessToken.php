@@ -44,6 +44,11 @@ class AccessToken implements AccessTokenContract
      * @var string
      */
     public $client_id;
+    /**
+     * Session data serialized
+     * @var string
+     */
+    public $session;
 
     /**
      * Cached reflection class
