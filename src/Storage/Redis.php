@@ -9,7 +9,8 @@ use Illuminate\Redis\RedisManager;
 use DigitSoft\LaravelTokenAuth\Facades\AccessToken;
 
 /**
- * Class Redis
+ * Class Redis.
+ * Redis storage component.
  * @package DigitSoft\LaravelTokenAuth\Storage
  */
 class Redis implements Storage
@@ -163,15 +164,16 @@ class Redis implements Storage
      */
     public function setToken($token)
     {
-        if (isset($token->ttl) && $token->ttl <= 0) {
+        $ttl = $this->getTokenRealTtl($token);
+        if ($ttl <= 0) {
             $this->removeToken($token);
             return;
         }
         $value = $this->serializeData($token->toArray(true));
         $key = $this->getTokenKey($token);
-        if ($token->ttl !== null) {
-            $this->getConnection()->setex($key, $token->ttl, $value);
-            $this->addUserToken($token, $token->ttl);
+        if ($ttl !== null) {
+            $this->getConnection()->setex($key, $ttl, $value);
+            $this->addUserToken($token, $ttl);
         } else {
             $this->getConnection()->set($key, $value);
             $this->addUserToken($token);
@@ -261,5 +263,25 @@ class Redis implements Storage
         $key = $this->getUserKey($user_id);
         $keys = $this->getConnection()->keys($key . ":*");
         return $keys;
+    }
+
+    /**
+     * Get AccessToken real TTL
+     * @param AccessTokenContract $token
+     * @return int|null
+     */
+    protected function getTokenRealTtl(AccessTokenContract $token)
+    {
+        $now = time();
+        if (!isset($token->ttl)) {
+            return null;
+        }
+        if (isset($token->exp)) {
+            $ttl = intval($token->exp - $now);
+        } else {
+            $token->exp = intval($now + $token->ttl);
+            $ttl = $token->ttl;
+        }
+        return $ttl > 0 ? $ttl : -1;
     }
 }
