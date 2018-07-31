@@ -27,12 +27,13 @@ class Redis implements Storage
 
     /**
      * Redis storage constructor.
-     * @param Repository $config
+     * @param Repository   $config
+     * @param RedisManager $manager
      */
-    public function __construct(Repository $config)
+    public function __construct(Repository $config, RedisManager $manager)
     {
         $this->connection = $config->get('auth-token.connection', null);
-        $this->manager = app()->refresh('redis', $this, 'setManager');
+        $this->manager = $manager;
     }
 
     /**
@@ -166,7 +167,7 @@ class Redis implements Storage
             $this->removeToken($token);
             return;
         }
-        $value = $this->serializeData($token->toArray());
+        $value = $this->serializeData($token->toArray(true));
         $key = $this->getTokenKey($token);
         if ($token->ttl !== null) {
             $this->getConnection()->setex($key, $token->ttl, $value);
