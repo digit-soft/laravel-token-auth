@@ -262,6 +262,6 @@ class AccessToken implements AccessTokenContract
      */
     protected function needToSave()
     {
-        return $this->saved && !$this->isChanged();
+        return !$this->saved || $this->isChanged();
     }
 }
