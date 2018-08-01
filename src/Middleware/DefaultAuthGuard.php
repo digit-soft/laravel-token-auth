@@ -9,6 +9,7 @@ use Illuminate\Auth\AuthManager;
  * Middleware that sets default auth guard driver on each request.
  * Feature is useful for applications, those work on top of React PHP (PHP PM)
  * @package DigitSoft\LaravelTokenAuth\Middleware
+ * @codeCoverageIgnore
  */
 class DefaultAuthGuard
 {

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
  * This middleware adds token id to specified header if token was generated during request.
  * E.g. guest token for session data or other cases.
  * @package App\Http\Middleware
+ * @codeCoverageIgnore
  */
 class AddGeneratedTokenToResponse
 {

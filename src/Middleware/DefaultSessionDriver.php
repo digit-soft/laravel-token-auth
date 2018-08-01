@@ -9,6 +9,7 @@ use Illuminate\Session\SessionManager;
  * Middleware that sets default auth session driver on each request.
  * Feature is useful for applications, those work on top of React PHP (PHP PM)
  * @package DigitSoft\LaravelTokenAuth\Middleware
+ * @codeCoverageIgnore
  */
 class DefaultSessionDriver
 {
