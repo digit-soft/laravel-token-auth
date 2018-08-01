@@ -66,6 +66,7 @@ abstract class TestCase extends BaseTestCase
     protected function createStorageMock()
     {
         $object = $this->createMock(StorageContract::class);
+        $object->method('setToken')->willReturn(true);
         return $object;
     }
 
@@ -91,9 +92,10 @@ abstract class TestCase extends BaseTestCase
      * @param string|null $token
      * @param int|null    $user_id
      * @param string|null $client_id
+     * @param bool        $fromStorage
      * @return AccessToken
      */
-    protected function createToken($ttl = false, $token = null, $user_id = null, $client_id = null)
+    protected function createToken($ttl = false, $token = null, $user_id = null, $client_id = null, $fromStorage = false)
     {
         $ttl = $ttl !== false ? $ttl : $this->token_ttl;
         $token = $token ?? $this->token_id;
@@ -104,8 +106,11 @@ abstract class TestCase extends BaseTestCase
             'token' => $token,
             'client_id' => $client_id,
         ];
-        $tokenObject = new AccessToken($this->getStorage(), $data);
+        $tokenObject = new AccessToken($this->getStorage(), $data, $fromStorage);
         $tokenObject->setTtl($ttl, true);
+        if ($fromStorage) {
+            $tokenObject->rememberState();
+        }
         return $tokenObject;
     }
 

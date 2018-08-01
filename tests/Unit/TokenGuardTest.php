@@ -131,6 +131,20 @@ class TokenGuardTest extends TestCase
         $this->assertFalse($guard->validate($userDataFake), 'User credentials are not valid');
     }
 
+    public function testSetNewTokenToGuard()
+    {
+        $newToken = $this->createToken(10, str_random(5));
+        list($usersProvider, $user, $storage) = $this->getAuthObjects();
+        $request = new Request(['api_token' => $this->token_id]);
+        $requestNew = new Request(['api_token' => $newToken->token]);
+        $guard = $this->createGuard($request, $usersProvider);
+        $this->assertTrue($guard->check(), 'User is authorized with old token');
+        $guard->setRequest($requestNew);
+        $this->assertFalse($guard->check(), 'User is not authorized with new token');
+        $guard->setToken($newToken);
+        $this->assertTrue($guard->check(), 'User is authorized with new token');
+    }
+
 
 
     protected function getAuthObjects()

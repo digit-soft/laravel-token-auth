@@ -121,7 +121,7 @@ class RedisStoreTest extends TestCase
     protected function getStorage()
     {
         if (!isset($this->storage)) {
-            $this->storage = new Redis(config());
+            $this->storage = new Redis(config(), $this->app->get('redis'));
         }
         return $this->storage;
     }

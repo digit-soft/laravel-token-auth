@@ -2,9 +2,9 @@
 
 namespace DigitSoft\LaravelTokenAuth\Tests\Unit;
 
-use DigitSoft\LaravelTokenAuth\Facades\TokenCached as AToken;
 use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
+use DigitSoft\LaravelTokenAuth\Facades\TokenCached;
 use DigitSoft\LaravelTokenAuth\Tests\TestCase;
 use Illuminate\Http\Request;
 
@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
  * @covers \DigitSoft\LaravelTokenAuth\AccessToken
  * @covers \DigitSoft\LaravelTokenAuth\Events\AccessTokenCreated
  * @covers \DigitSoft\LaravelTokenAuth\AccessTokenHelper
+ * @covers \DigitSoft\LaravelTokenAuth\Traits\TracksPropertiesChanges
  */
 class AccessTokenTest extends TestCase
 {
@@ -25,7 +26,7 @@ class AccessTokenTest extends TestCase
             'ttl' => $this->token_ttl,
             'client_id' => $this->token_client_id,
         ];
-        $token = AToken::createFromData($data);
+        $token = TokenCached::createFromData($data);
         $this->assertEquals($data['token'], $token->token, 'Token ID is equal');
         $this->assertEquals($data['user_id'], $token->user_id, 'User ID is equal');
         $this->assertEquals($data['ttl'], $token->ttl, 'Time to live is equal');
@@ -36,7 +37,7 @@ class AccessTokenTest extends TestCase
     {
         $user = $this->createUser();
         $this->bindStorage(function () { return $this->createStorageMock(); });
-        $token = AToken::createFor($user);
+        $token = TokenCached::createFor($user);
         $this->assertEquals($user->getAuthIdentifier(), $token->user_id, 'User ID is equal');
         $this->assertNotEmpty($token->token, 'Token ID is not empty');
     }
@@ -44,7 +45,7 @@ class AccessTokenTest extends TestCase
     public function testSetDifferentTimeToLive()
     {
         $user = $this->createUser();
-        $token = AToken::createFor($user, $this->token_client_id, false);
+        $token = TokenCached::createFor($user, $this->token_client_id, false);
         $this->assertNull($token->ttl, 'Time to live is NULL');
         $this->assertNull($token->iat, 'Issued at time is NULL');
         $this->assertNull($token->exp, 'Expire time is NULL');
@@ -138,18 +139,18 @@ class AccessTokenTest extends TestCase
         $requestHeader = new Request();
         $requestHeader->headers->set(AccessTokenContract::REQUEST_CLIENT_ID_HEADER, $clientId);
         $requestEmpty = new Request();
-        $this->assertEquals($clientId, AToken::getClientIdFromRequest($requestGet), 'Get client id from GET params');
-        $this->assertEquals($clientId, AToken::getClientIdFromRequest($requestPost), 'Get client id from POST params');
-        $this->assertEquals($clientId, AToken::getClientIdFromRequest($requestHeader), 'Get client id from headers');
-        $this->assertEquals(AToken::getDefaultClientId(), AToken::getClientIdFromRequest($requestEmpty), 'Get client id from empty request');
-        $this->assertNotEquals($clientIdFake, AToken::getClientIdFromRequest($requestGet));
+        $this->assertEquals($clientId, TokenCached::getClientIdFromRequest($requestGet), 'Get client id from GET params');
+        $this->assertEquals($clientId, TokenCached::getClientIdFromRequest($requestPost), 'Get client id from POST params');
+        $this->assertEquals($clientId, TokenCached::getClientIdFromRequest($requestHeader), 'Get client id from headers');
+        $this->assertEquals(TokenCached::getDefaultClientId(), TokenCached::getClientIdFromRequest($requestEmpty), 'Get client id from empty request');
+        $this->assertNotEquals($clientIdFake, TokenCached::getClientIdFromRequest($requestGet));
     }
 
     public function testGuestTokenGeneration()
     {
         $user = $this->createUser();
-        $tokenUser = AToken::createFor($user);
-        $tokenGuest = AToken::createForGuest();
+        $tokenUser = TokenCached::createFor($user);
+        $tokenGuest = TokenCached::createForGuest();
         $this->assertFalse($tokenUser->isGuest(), 'Token for user is checking correct');
         $this->assertTrue($tokenGuest->isGuest(), 'Token for guest is checking correct');
         $this->assertNotEmpty($tokenGuest->token, 'Token for guest is not empty');
@@ -165,13 +166,30 @@ class AccessTokenTest extends TestCase
         $user = $this->createUser();
         $user2 = $this->createUser($this->token_user_id_fake);
         $this->bindStorage(function () use ($token) { return $token->getStorage(); });
-        $tokenRead = AToken::getFirstFor($user);
-        $tokenReadEmpty = AToken::getFirstFor($user, $this->token_client_id . '2');
-        $tokenReadEmpty2 = AToken::getFirstFor($user2, $this->token_client_id);
+        $tokenRead = TokenCached::getFirstFor($user);
+        $tokenReadEmpty = TokenCached::getFirstFor($user, $this->token_client_id . '2');
+        $tokenReadEmpty2 = TokenCached::getFirstFor($user2, $this->token_client_id);
         $this->assertInstanceOf(AccessTokenContract::class, $tokenRead, 'Token found');
         $this->assertEquals($tokenRead->token, $token->token, 'Found equal token');
         $this->assertNull($tokenReadEmpty, 'Token for non existing client not found');
         $this->assertNull($tokenReadEmpty2, 'Token for non existing user not found');
+    }
+
+    public function testUpdateTokenPropertiesAndCheckState()
+    {
+        $token = $this->createToken(30, null, null, null, true);
+        $tokenNoState = $this->createToken(30, str_random(60));
+        $this->assertFalse($token->isChanged(), 'Token was not changed');
+        $oldTokenId = $token->token;
+        $token->regenerate();
+        $this->assertTrue($token->isChanged(), 'Token was changed');
+        $this->assertNotEquals($oldTokenId, $token->token, 'Token ID was changed');
+        $token->restoreState();
+        $this->assertEquals($oldTokenId, $token->token, 'Token ID was restored');
+        $this->assertTrue($tokenNoState->isChanged(), 'Token has changes because it has no state');
+        $tokenNoStateData = $tokenNoState->toArray(true);
+        $tokenNoState->restoreState();
+        $this->assertEquals($tokenNoState->toArray(true), $tokenNoStateData, 'Token has empty state so cant be restored');
     }
 
     public function testRemoveTokenFromStorage()
@@ -235,6 +253,7 @@ class AccessTokenTest extends TestCase
     protected function configureStorageMockForTokenGetByUser($mock, $token)
     {
         // Three calls for existing client id, not existing client id and not existing user
+        $tokenToReturn = TokenCached::createFromData($token->toArray(true), true);
         $mock->expects($this->atLeast(3))
             ->method('getUserTokens')
             ->withConsecutive(
@@ -243,8 +262,8 @@ class AccessTokenTest extends TestCase
                 [$this->token_user_id_fake, true]
             )
             ->willReturnOnConsecutiveCalls(
-                [$token->token => $token],
-                [$token->token => $token],
+                [$token->token => $tokenToReturn],
+                [$token->token => $tokenToReturn],
                 []
             );
     }
