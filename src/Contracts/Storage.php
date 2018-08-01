@@ -32,6 +32,7 @@ interface Storage
     /**
      * Remove user token and its content
      * @param AccessToken $token
+     * @return bool
      */
     public function removeToken($token);
 

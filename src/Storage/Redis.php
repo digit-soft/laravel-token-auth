@@ -6,7 +6,7 @@ use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
 use Illuminate\Config\Repository;
 use Illuminate\Redis\RedisManager;
-use DigitSoft\LaravelTokenAuth\Facades\AccessToken;
+use DigitSoft\LaravelTokenAuth\Facades\TokenCached;
 
 /**
  * Class Redis.
@@ -131,7 +131,7 @@ class Redis implements Storage
         $key = $this->getTokenKey($tokenId);
         $dataStr = $this->getConnection()->get($key);
         if (!empty($dataStr) && ($data = $this->unserializeData($dataStr)) !== null) {
-            return AccessToken::createFromData($data);
+            return TokenCached::createFromData($data, true);
         }
         return null;
     }
@@ -153,7 +153,7 @@ class Redis implements Storage
             if (!isset($dataStr) || ($data = $this->unserializeData($dataStr)) === null) {
                 continue;
             }
-            $result[$tokenIds[$index]] = AccessToken::createFromData($data);
+            $result[$tokenIds[$index]] = TokenCached::createFromData($data, true);
         }
         return $result;
     }
@@ -185,12 +185,14 @@ class Redis implements Storage
     /**
      * Remove user token and its content
      * @param AccessTokenContract $token
+     * @return bool
      */
     public function removeToken($token)
     {
         $tokenKey = $this->getTokenKey($token);
         $this->getConnection()->expire($tokenKey, 0);
         $this->removeUserToken($token);
+        return true;
     }
 
     /**
