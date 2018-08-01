@@ -82,7 +82,9 @@ trait TracksPropertiesChanges
         foreach ($this->_reflection->getProperties(\ReflectionProperty::IS_PUBLIC) as $property) {
             $name = $property->getName();
             if ($property->isStatic()) {
+                // @codeCoverageIgnoreStart
                 continue;
+                // @codeCoverageIgnoreEnd
             }
             $state[$name] = $this->{$name};
         }

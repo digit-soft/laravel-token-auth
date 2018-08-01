@@ -85,6 +85,7 @@ class AccessToken implements AccessTokenContract
         $this->storage = $storage;
         if ($fromStorage) {
             $this->saved = true;
+            $this->rememberState();
         }
     }
 
