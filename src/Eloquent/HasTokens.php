@@ -2,7 +2,7 @@
 
 namespace DigitSoft\LaravelTokenAuth\Eloquent;
 
-use DigitSoft\LaravelTokenAuth\Facades\AccessToken as AToken;
+use DigitSoft\LaravelTokenAuth\Facades\TokenCached;
 use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
 
@@ -26,7 +26,7 @@ trait HasTokens
     public function getToken($client_id = null)
     {
         $client_id = $client_id ?? $this->getClientIdFromRequest();
-        $token = AToken::getFirstFor($this, $client_id);
+        $token = TokenCached::getFirstFor($this, $client_id);
         $token = $token ?? $this->createToken($client_id);
         return $token;
     }
@@ -39,7 +39,7 @@ trait HasTokens
      */
     public function createToken($client_id = null, $ttl = 0)
     {
-        $token = AToken::createFor($this, $client_id);
+        $token = TokenCached::createFor($this, $client_id);
         if ($ttl !== 0) {
             $token->setTtl($ttl);
         }
@@ -62,6 +62,6 @@ trait HasTokens
      */
     protected function getClientIdFromRequest()
     {
-        return AToken::getClientIdFromRequest(app('request'));
+        return TokenCached::getClientIdFromRequest(app('request'));
     }
 }

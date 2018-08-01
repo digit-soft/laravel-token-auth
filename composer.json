@@ -33,7 +33,7 @@
                 "DigitSoft\\LaravelTokenAuth\\AuthServiceProvider"
             ],
             "aliases": {
-                "AccessToken": "DigitSoft\\LaravelTokenAuth\\Facades\\AccessToken"
+                "TokenCached": "DigitSoft\\LaravelTokenAuth\\Facades\\TokenCached"
             }
         }
     },
