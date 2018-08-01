@@ -166,7 +166,7 @@ class Redis implements Storage
     public function setToken($token)
     {
         $ttl = $this->getTokenRealTtl($token);
-        if ($ttl <= 0) {
+        if (isset($ttl) && $ttl <= 0) {
             $this->removeToken($token);
             return false;
         }
