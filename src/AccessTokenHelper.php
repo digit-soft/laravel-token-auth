@@ -103,11 +103,12 @@ class AccessTokenHelper
     /**
      * Create token instance from data array
      * @param array $data
+     * @param bool  $fromStorage
      * @return Contracts\AccessToken
      */
-    public function createFromData($data = [])
+    public function createFromData($data = [], $fromStorage = false)
     {
-        return app()->make(AccessTokenContract::class, ['config' => $data]);
+        return app()->make(AccessTokenContract::class, ['config' => $data, 'fromStorage' => $fromStorage]);
     }
 
     /**
