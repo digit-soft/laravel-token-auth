@@ -2,6 +2,7 @@
 
 namespace DigitSoft\LaravelTokenAuth\Contracts;
 
+use DigitSoft\LaravelTokenAuth\Traits\TracksPropertiesChanges;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
 
@@ -15,6 +16,7 @@ use Illuminate\Contracts\Support\Jsonable;
  * @property int|null    $exp  Token expire time
  * @property int|null    $ttl  Token time to live
  * @property string|null $session  Token session data
+ * @mixin TracksPropertiesChanges
  */
 interface AccessToken extends Jsonable, Arrayable
 {
@@ -44,11 +46,13 @@ interface AccessToken extends Jsonable, Arrayable
 
     /**
      * Save token to storage
+     * @return bool
      */
     public function save();
 
     /**
      * Remove token from storage
+     * @return bool
      */
     public function remove();
 

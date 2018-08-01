@@ -4,6 +4,7 @@ namespace DigitSoft\LaravelTokenAuth;
 
 use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
+use DigitSoft\LaravelTokenAuth\Traits\TracksPropertiesChanges;
 use Illuminate\Queue\SerializesModels;
 
 /**
@@ -12,7 +13,7 @@ use Illuminate\Queue\SerializesModels;
  */
 class AccessToken implements AccessTokenContract
 {
-    use SerializesModels;
+    use SerializesModels, TracksPropertiesChanges;
 
     /**
      * User ID
@@ -64,18 +65,27 @@ class AccessToken implements AccessTokenContract
      * @var array
      */
     protected $guarded = ['session'];
+    /**
+     * Saved in storage or not
+     * @var bool
+     */
+    protected $saved = false;
 
     /**
      * Token constructor.
      * @param Storage $storage
      * @param array   $config
+     * @param bool    $fromStorage
      */
-    public function __construct(Storage $storage, $config = [])
+    public function __construct(Storage $storage, $config = [], $fromStorage = false)
     {
-        $this->client_id = Facades\AccessToken::getDefaultClientId();
+        $this->client_id = Facades\TokenCached::getDefaultClientId();
         $this->session = serialize([]);
         $this->configureSelf($config);
         $this->storage = $storage;
+        if ($fromStorage) {
+            $this->saved = true;
+        }
     }
 
     /**
@@ -112,25 +122,31 @@ class AccessToken implements AccessTokenContract
 
     /**
      * Save token to storage
+     * @return bool
      */
     public function save()
     {
         if (!isset($this->iat)) {
             $this->iat = now()->timestamp;
         }
-        $this->storage->setToken($this);
+        if($this->needToSave() && $this->storage->setToken($this)) {
+            $this->saved = true;
+        }
+        return $this->saved;
     }
 
     /**
      * Remove token from storage
+     * @return bool
      */
     public function remove()
     {
-        $this->storage->removeToken($this);
+        return $this->storage->removeToken($this);
     }
 
     /**
-     * @inheritdoc
+     * Regenerate token
+     * @param bool $save
      */
     public function regenerate($save = false)
     {
@@ -238,5 +254,14 @@ class AccessToken implements AccessTokenContract
     protected function generateTokenId()
     {
         return str_random(config('auth-token.token_length', 60));
+    }
+
+    /**
+     * Check that object need to be saved to storage
+     * @return bool
+     */
+    protected function needToSave()
+    {
+        return $this->saved && !$this->isChanged();
     }
 }
