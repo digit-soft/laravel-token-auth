@@ -132,6 +132,7 @@ class AccessToken implements AccessTokenContract
         }
         if($this->needToSave() && $this->storage->setToken($this)) {
             $this->saved = true;
+            $this->rememberState();
         }
         return $this->saved;
     }
