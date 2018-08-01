@@ -25,7 +25,7 @@ Change driver to `token-cached` in **_config/auth.php_**
     ],
 ```
 
-### Goes with multiple middleware
+### Ships with multiple middleware
 * `DigitSoft\LaravelTokenAuth\Middleware\DefaultAuthGuard` - set default auth guard to given value
 * `DigitSoft\LaravelTokenAuth\Middleware\DefaultSessionDriver` - set default session driver to given value
 * `DigitSoft\LaravelTokenAuth\Middleware\AddGeneratedTokenToResponse` - adds token generated during request to response header
