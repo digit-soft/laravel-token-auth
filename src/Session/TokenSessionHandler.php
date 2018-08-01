@@ -198,7 +198,7 @@ class TokenSessionHandler implements SessionHandlerInterface
         $autoCreate = $this->config->get('auth-token.session_token_autocreate', false);
         $token = $guard->token();
         if ($autoCreate && $token === null) {
-            $token = \AccessToken::createForGuest();
+            $token = \TokenCached::createForGuest();
             $guard->setToken($token);
         }
         return $token;

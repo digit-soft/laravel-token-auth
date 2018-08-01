@@ -2,7 +2,7 @@
 
 namespace DigitSoft\LaravelTokenAuth\Tests\Unit;
 
-use DigitSoft\LaravelTokenAuth\Facades\AccessToken as AToken;
+use DigitSoft\LaravelTokenAuth\Facades\TokenCached as AToken;
 use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
 use DigitSoft\LaravelTokenAuth\Tests\TestCase;
