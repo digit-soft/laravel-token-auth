@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static string getDefaultClientId()
  * @method static string getClientIdFromRequest(\Illuminate\Http\Request $request)
  * @codeCoverageIgnore
+ * @see \DigitSoft\LaravelTokenAuth\AccessTokenHelper
  */
 class TokenCached extends Facade
 {
