@@ -151,7 +151,7 @@ class TokenGuard implements Guard
     /**
      * Reset guard state
      */
-    protected function reset()
+    public function reset()
     {
         $this->token = null;
         $this->user = null;
