@@ -28,6 +28,8 @@ class TokenGuard implements Guard
      */
     protected $token;
 
+    protected $no_reset = false;
+
     use GuardHelpers;
 
     /**
@@ -50,7 +52,7 @@ class TokenGuard implements Guard
      */
     public function setRequest(Request $request)
     {
-        if ($this->request !== $request) {
+        if (!$this->no_reset && $this->request !== $request) {
             $this->reset();
         }
         $this->request = $request;
@@ -151,9 +153,17 @@ class TokenGuard implements Guard
     /**
      * Reset guard state
      */
-    public function reset()
+    protected function reset()
     {
         $this->token = null;
         $this->user = null;
+    }
+
+    /**
+     * Make guard not `resetable` for tests
+     */
+    public function fake()
+    {
+        $this->no_reset = true;
     }
 }
