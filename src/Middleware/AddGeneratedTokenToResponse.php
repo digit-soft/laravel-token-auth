@@ -4,6 +4,7 @@ namespace DigitSoft\LaravelTokenAuth\Middleware;
 
 use DigitSoft\LaravelTokenAuth\Contracts\TokenGuard;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -24,8 +25,9 @@ class AddGeneratedTokenToResponse
      */
     public function handle($request, \Closure $next)
     {
+        /** @var Response $response */
         $response = $next($request);
-        if (($token = $this->getTokenGenerated()) === null) {
+        if (($token = $this->getTokenGenerated()) === null || !method_exists($response, 'header')) {
             return $response;
         }
         $response->header(config('auth-token.response_token_header'), $token->token);
