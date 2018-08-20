@@ -158,7 +158,7 @@ class TokenSessionHandler implements SessionHandlerInterface
      */
     protected function cleanupSessionData($session_data)
     {
-        $remove = ['_previous', '_token', '_flash'];
+        $remove = ['_previous', '_token', '_flash', 'PHPDEBUGBAR_STACK_DATA'];
         if ($session_data === null || $session_data === '') {
             return $session_data;
         }
