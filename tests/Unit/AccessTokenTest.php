@@ -178,7 +178,7 @@ class AccessTokenTest extends TestCase
     public function testUpdateTokenPropertiesAndCheckState()
     {
         $token = $this->createToken(30, null, null, null, true);
-        $tokenNoState = $this->createToken(30, str_random(60));
+        $tokenNoState = $this->createToken(30, TokenCached::generateTokenStr());
         $this->assertFalse($token->isChanged(), 'Token was not changed');
         $oldTokenId = $token->token;
         $token->regenerate();

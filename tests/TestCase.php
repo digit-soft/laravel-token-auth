@@ -34,7 +34,7 @@ abstract class TestCase extends BaseTestCase
     public function __construct(?string $name = null, array $data = [], string $dataName = '')
     {
         parent::__construct($name, $data, $dataName);
-        $this->token_id = '4BaoPSOuvasGj55BUJluikbbSC9eoaZk2Z3tI7kQB56hkp7xGNRQxfMfBMB0';
+        $this->token_id = 'oDBJX80udsxkxEh9AEnGe7IjtAvmK3B688dbbACe26155202a2D06A3f0c50BC73b0D72B9A8eB35Ebc50E8b1Ca3E9128LJt81Mjcp8gke2Iwowv5gQlJv564Fi';
         $this->token_user_id = 1;
         $this->token_user_email = 'example@example.com';
         $this->token_user_password = 'no_password';

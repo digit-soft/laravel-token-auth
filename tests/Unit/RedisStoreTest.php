@@ -3,6 +3,7 @@
 namespace DigitSoft\LaravelTokenAuth\Tests\Unit;
 
 use DigitSoft\LaravelTokenAuth\AccessToken;
+use DigitSoft\LaravelTokenAuth\Facades\TokenCached;
 use DigitSoft\LaravelTokenAuth\Storage\Redis;
 use DigitSoft\LaravelTokenAuth\Tests\TestCase;
 use Illuminate\Redis\Connections\Connection;
@@ -34,8 +35,8 @@ class RedisStoreTest extends TestCase
     public function testTokenInsertAndRead()
     {
         $token = $this->createToken();
-        $tokenNoTtl = $this->createToken(null, str_random(60));
-        $tokenNoUser = $this->createToken(10, str_random(60));
+        $tokenNoTtl = $this->createToken(null, TokenCached::generateTokenStr());
+        $tokenNoUser = $this->createToken(10, TokenCached::generateTokenStr());
         $tokenNoUser->user_id = \DigitSoft\LaravelTokenAuth\Contracts\AccessToken::USER_ID_GUEST;
         $this->getStorage()->setManager(app('redis'));
         $this->getStorage()->setToken($token);
@@ -67,8 +68,8 @@ class RedisStoreTest extends TestCase
     public function testTokenUserAssign()
     {
         $token = $this->createToken();
-        $tokenExpired = $this->createToken(0, str_random(60));
-        $tokenExpiring = $this->createToken(1, str_random(60));
+        $tokenExpired = $this->createToken(0, TokenCached::generateTokenStr());
+        $tokenExpiring = $this->createToken(1, TokenCached::generateTokenStr());
         $this->getStorage()->setToken($token);
         $this->getStorage()->setToken($tokenExpired);
         $this->getStorage()->setToken($tokenExpiring);
@@ -104,9 +105,9 @@ class RedisStoreTest extends TestCase
     {
         /** @var \DigitSoft\LaravelTokenAuth\Contracts\AccessToken[] $tokens */
         $tokens = [];
-        $tokens[] = $this->createToken(false, str_random(60));
-        $tokens[] = $this->createToken(false, str_random(60));
-        $tokens[] = $this->createToken(false, str_random(60));
+        $tokens[] = $this->createToken(false, TokenCached::generateTokenStr());
+        $tokens[] = $this->createToken(false, TokenCached::generateTokenStr());
+        $tokens[] = $this->createToken(false, TokenCached::generateTokenStr());
         foreach ($tokens as $token) {
             $token->save();
         }

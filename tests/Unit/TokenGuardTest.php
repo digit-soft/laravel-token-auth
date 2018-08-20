@@ -2,6 +2,7 @@
 
 namespace DigitSoft\LaravelTokenAuth\Tests\Unit;
 
+use DigitSoft\LaravelTokenAuth\Facades\TokenCached;
 use DigitSoft\LaravelTokenAuth\Tests\TestCase;
 use DigitSoft\LaravelTokenAuth\Tests\User;
 use Illuminate\Http\Request;
@@ -133,7 +134,7 @@ class TokenGuardTest extends TestCase
 
     public function testSetNewTokenToGuard()
     {
-        $newToken = $this->createToken(10, str_random(5));
+        $newToken = $this->createToken(10, TokenCached::generateTokenStr());
         list($usersProvider, $user, $storage) = $this->getAuthObjects();
         $request = new Request(['api_token' => $this->token_id]);
         $requestNew = new Request(['api_token' => $newToken->token]);
