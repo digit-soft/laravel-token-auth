@@ -4,6 +4,7 @@ namespace DigitSoft\LaravelTokenAuth;
 
 use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
+use DigitSoft\LaravelTokenAuth\Facades\TokenCached;
 use DigitSoft\LaravelTokenAuth\Traits\TracksPropertiesChanges;
 use Illuminate\Queue\SerializesModels;
 
@@ -228,10 +229,10 @@ class AccessToken implements AccessTokenContract
     public function ensureUniqueness()
     {
         if ($this->token === null) {
-            $this->token = $this->generateTokenId();
+            $this->token = TokenCached::generateTokenStr();
         }
         while ($this->storage->tokenExists($this->token)) {
-            $this->token = $this->generateTokenId();
+            $this->token = TokenCached::generateTokenStr();
         }
         return $this;
     }
@@ -247,15 +248,6 @@ class AccessToken implements AccessTokenContract
                 $this->{$key} = $value;
             }
         }
-    }
-
-    /**
-     * Generate random string
-     * @return string
-     */
-    protected function generateTokenId()
-    {
-        return str_random(config('auth-token.token_length', 60));
     }
 
     /**

@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Facade;
  * @method static \DigitSoft\LaravelTokenAuth\Contracts\AccessToken createFromData($data = [], $fromStorage = false)
  * @method static string getDefaultClientId()
  * @method static string getClientIdFromRequest(\Illuminate\Http\Request $request)
+ * @method static string generateTokenStr()
+ * @method static bool validateTokenStr(string $token)
  * @codeCoverageIgnore
  * @see \DigitSoft\LaravelTokenAuth\AccessTokenHelper
  */

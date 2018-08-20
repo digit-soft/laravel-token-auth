@@ -137,6 +137,44 @@ class AccessTokenHelper
     }
 
     /**
+     * Generate random token string
+     * @return string
+     */
+    public function generateTokenStr()
+    {
+        $randLength = config('auth-token.token_length', 60);
+        $randomStr = str_random($randLength);
+        $hash = hash('sha256', $randomStr);
+        $hashLn = strlen($hash);
+        for ($i = 0; $i < $hashLn; $i++) {
+            if (!is_numeric($hash[$i]) && rand(0, 1) % 2) {
+                $hash[$i] = strtoupper($hash[$i]);
+            }
+        }
+        $pos = ceil($randLength / 2);
+        $tokenStr = substr($randomStr, 0, $pos) . $hash . substr($randomStr, $pos);
+        return $tokenStr;
+    }
+
+    /**
+     * Validate token string
+     * @param string $token
+     * @return bool
+     */
+    public function validateTokenStr(string $token)
+    {
+        $randLength = config('auth-token.token_length', 60);
+        $hashLn = 64; //for sha256 (256/4)
+        if (strlen($token) !== ($randLength + $hashLn)) {
+            return false;
+        }
+        $pos = ceil($randLength / 2);
+        $randStr = substr($token, 0, $pos) . substr($token, -($randLength - $pos));
+        $hash = strtolower(substr($token, $pos, $hashLn));
+        return hash('sha256', $randStr) === $hash;
+    }
+
+    /**
      * Check that client ID is valid
      * @param string $client_id
      * @return bool
