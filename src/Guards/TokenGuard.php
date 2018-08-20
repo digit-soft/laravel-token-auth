@@ -4,6 +4,7 @@ namespace DigitSoft\LaravelTokenAuth\Guards;
 
 use DigitSoft\LaravelTokenAuth\Contracts\AccessToken;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
+use DigitSoft\LaravelTokenAuth\Facades\TokenCached;
 use Illuminate\Auth\GuardHelpers;
 use DigitSoft\LaravelTokenAuth\Contracts\TokenGuard as Guard;
 use Illuminate\Contracts\Auth\UserProvider;
@@ -120,7 +121,7 @@ class TokenGuard implements Guard
      */
     public function token()
     {
-        if ($this->token === null && ($tokenRequest = $this->getTokenForRequest()) !== null) {
+        if ($this->token === null && ($tokenRequest = $this->getTokenForRequest()) !== null && TokenCached::validateTokenStr($tokenRequest)) {
             $this->token = $this->getStorage()->getToken($tokenRequest);
         }
         return $this->token;
