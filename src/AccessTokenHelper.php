@@ -145,7 +145,7 @@ class AccessTokenHelper
         $randLength = config('auth-token.token_length', 60);
         $randomStr = str_random($randLength);
         $hash = hash('sha256', $randomStr);
-        $hashLn = strlen($hash);
+        $hashLn = 64; //for sha256 (256/4)
         for ($i = 0; $i < $hashLn; $i++) {
             if (!is_numeric($hash[$i]) && rand(0, 1) % 2) {
                 $hash[$i] = strtoupper($hash[$i]);
