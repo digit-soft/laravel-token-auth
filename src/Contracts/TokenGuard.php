@@ -9,6 +9,14 @@ namespace DigitSoft\LaravelTokenAuth\Contracts;
 interface TokenGuard extends \Illuminate\Contracts\Auth\Guard
 {
     /**
+     * Log a user into the application without sessions or cookies.
+     *
+     * @param  array  $credentials
+     * @return bool
+     */
+    public function once(array $credentials = []);
+
+    /**
      * Get access token object for current request
      * @return AccessToken|null
      */

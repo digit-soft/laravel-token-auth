@@ -4,6 +4,7 @@ namespace DigitSoft\LaravelTokenAuth\Guards;
 
 use DigitSoft\LaravelTokenAuth\Contracts\AccessToken;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
+use DigitSoft\LaravelTokenAuth\Eloquent\HasTokens;
 use DigitSoft\LaravelTokenAuth\Facades\TokenCached;
 use Illuminate\Auth\GuardHelpers;
 use DigitSoft\LaravelTokenAuth\Contracts\TokenGuard as Guard;
@@ -28,6 +29,10 @@ class TokenGuard implements Guard
      * @var AccessToken
      */
     protected $token;
+    /**
+     * @var \Illuminate\Contracts\Auth\Authenticatable
+     */
+    protected $lastAttempted;
 
     protected $no_reset = false;
 
@@ -92,6 +97,25 @@ class TokenGuard implements Guard
     }
 
     /**
+     * Log a user into the application without sessions or cookies.
+     *
+     * @param  array  $credentials
+     * @return bool
+     */
+    public function once(array $credentials = [])
+    {
+        if ($this->validate($credentials) && ($user = $this->lastAttempted) !== null) {
+            /** @var \Illuminate\Contracts\Auth\Authenticatable|HasTokens $user */
+            $this->setUser($user);
+            $this->setToken($user->getToken());
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Get the currently authenticated user.
      *
      * @return \Illuminate\Contracts\Auth\Authenticatable|null
@@ -144,11 +168,9 @@ class TokenGuard implements Guard
      */
     public function validate(array $credentials = [])
     {
-        if ($this->provider->retrieveByCredentials($credentials)) {
-            return true;
-        }
+        $this->lastAttempted = $user = $this->provider->retrieveByCredentials($credentials);
 
-        return false;
+        return $this->hasValidCredentials($user, $credentials);
     }
 
     /**
@@ -158,6 +180,19 @@ class TokenGuard implements Guard
     {
         $this->token = null;
         $this->user = null;
+        $this->lastAttempted = null;
+    }
+
+    /**
+     * Determine if the user matches the credentials.
+     *
+     * @param  mixed  $user
+     * @param  array  $credentials
+     * @return bool
+     */
+    protected function hasValidCredentials($user, $credentials)
+    {
+        return ! is_null($user) && $this->provider->validateCredentials($user, $credentials);
     }
 
     /**
