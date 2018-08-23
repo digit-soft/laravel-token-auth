@@ -99,7 +99,7 @@ class TokenGuard implements Guard
     /**
      * Log a user into the application without sessions or cookies.
      *
-     * @param  array  $credentials
+     * @param array $credentials
      * @return bool
      */
     public function once(array $credentials = [])
@@ -118,7 +118,7 @@ class TokenGuard implements Guard
     /**
      * Get the currently authenticated user.
      *
-     * @return \Illuminate\Contracts\Auth\Authenticatable|null
+     * @return \Illuminate\Contracts\Auth\Authenticatable|HasTokens|null
      */
     public function user()
     {
