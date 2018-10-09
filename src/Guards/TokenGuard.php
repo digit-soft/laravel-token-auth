@@ -116,6 +116,20 @@ class TokenGuard implements Guard
     }
 
     /**
+     * Log a user into the application without sessions or cookies externally checked and got.
+     *
+     * @param \Illuminate\Contracts\Auth\Authenticatable|HasTokens $user
+     * @return bool
+     */
+    public function onceExternal($user)
+    {
+        $this->lastAttempted = $user;
+        $this->setUser($user);
+        $this->setToken($user->getToken());
+        return $this->token !== null;
+    }
+
+    /**
      * Get the currently authenticated user.
      *
      * @return \Illuminate\Contracts\Auth\Authenticatable|HasTokens|null

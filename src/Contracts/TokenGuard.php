@@ -2,6 +2,8 @@
 
 namespace DigitSoft\LaravelTokenAuth\Contracts;
 
+use DigitSoft\LaravelTokenAuth\Eloquent\HasTokens;
+
 /**
  * Interface Guard
  * @package DigitSoft\LaravelTokenAuth\Contracts
@@ -15,6 +17,14 @@ interface TokenGuard extends \Illuminate\Contracts\Auth\Guard
      * @return bool
      */
     public function once(array $credentials = []);
+
+    /**
+     * Log a user into the application without sessions or cookies externally checked and got.
+     *
+     * @param \Illuminate\Contracts\Auth\Authenticatable|HasTokens $user
+     * @return bool
+     */
+    public function onceExternal($user);
 
     /**
      * Get access token object for current request
