@@ -188,16 +188,6 @@ class TokenGuard implements Guard
     }
 
     /**
-     * Reset guard state
-     */
-    protected function reset()
-    {
-        $this->token = null;
-        $this->user = null;
-        $this->lastAttempted = null;
-    }
-
-    /**
      * Determine if the user matches the credentials.
      *
      * @param  mixed  $user
@@ -207,6 +197,16 @@ class TokenGuard implements Guard
     protected function hasValidCredentials($user, $credentials)
     {
         return ! is_null($user) && $this->provider->validateCredentials($user, $credentials);
+    }
+
+    /**
+     * Reset guard state
+     */
+    public function reset()
+    {
+        $this->token = null;
+        $this->user = null;
+        $this->lastAttempted = null;
     }
 
     /**

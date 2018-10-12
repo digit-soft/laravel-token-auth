@@ -8,6 +8,7 @@ use DigitSoft\LaravelTokenAuth\Eloquent\HasTokens;
  * Interface Guard
  * @package DigitSoft\LaravelTokenAuth\Contracts
  * @method fake() Used for testing in stateless environment
+ * @method reset() Reset guard state
  */
 interface TokenGuard extends \Illuminate\Contracts\Auth\Guard
 {
