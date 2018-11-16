@@ -51,6 +51,12 @@ interface AccessToken extends Jsonable, Arrayable
     public function save();
 
     /**
+     * Get saved flag
+     * @return bool
+     */
+    public function saved();
+
+    /**
      * Remove token from storage
      * @return bool
      */

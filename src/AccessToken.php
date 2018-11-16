@@ -139,6 +139,15 @@ class AccessToken implements AccessTokenContract
     }
 
     /**
+     * Get saved flag
+     * @return bool
+     */
+    public function saved()
+    {
+        return $this->saved;
+    }
+
+    /**
      * Remove token from storage
      * @return bool
      */

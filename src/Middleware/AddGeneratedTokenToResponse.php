@@ -47,6 +47,6 @@ class AddGeneratedTokenToResponse
         if (!$guard instanceof TokenGuard || ($token = $guard->token()) === null) {
             return null;
         }
-        return $token->token !== $guard->getTokenForRequest() ? $token : null;
+        return $token->saved() && $token->token !== $guard->getTokenForRequest() ? $token : null;
     }
 }
