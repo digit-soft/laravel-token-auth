@@ -11,6 +11,12 @@ use Illuminate\Queue\SerializesModels;
 /**
  * Class AccessToken
  * @package DigitSoft\LaravelTokenAuth
+ * @OA\Property("user_id",example=1,description="User ID")
+ * @OA\Property("token",type="string",description="Token string")
+ * @OA\Property("iat",example=19200000,description="Issued at time")
+ * @OA\Property("ttl",example=8600,description="Time to live")
+ * @OA\Property("exp",example=19200000,description="Expire time")
+ * @OA\Property("client_id",type="string",description="Client ID")
  */
 class AccessToken implements AccessTokenContract
 {
