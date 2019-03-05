@@ -45,7 +45,7 @@ abstract class TestCase extends BaseTestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->token_client_id = AToken::getDefaultClientId();
