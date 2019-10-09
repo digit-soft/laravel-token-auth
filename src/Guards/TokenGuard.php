@@ -2,18 +2,17 @@
 
 namespace DigitSoft\LaravelTokenAuth\Guards;
 
-use DigitSoft\LaravelTokenAuth\Contracts\AccessToken;
+use Illuminate\Http\Request;
+use Illuminate\Auth\GuardHelpers;
+use Illuminate\Contracts\Auth\UserProvider;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
 use DigitSoft\LaravelTokenAuth\Eloquent\HasTokens;
 use DigitSoft\LaravelTokenAuth\Facades\TokenCached;
-use Illuminate\Auth\GuardHelpers;
+use DigitSoft\LaravelTokenAuth\Contracts\AccessToken;
 use DigitSoft\LaravelTokenAuth\Contracts\TokenGuard as Guard;
-use Illuminate\Contracts\Auth\UserProvider;
-use Illuminate\Http\Request;
 
 /**
  * Class TokenGuard
- * @package DigitSoft\LaravelTokenAuth\Guards
  */
 class TokenGuard implements Guard
 {
@@ -33,7 +32,10 @@ class TokenGuard implements Guard
      * @var \Illuminate\Contracts\Auth\Authenticatable
      */
     protected $lastAttempted;
-
+    /**
+     * Flag, do not reset user instance on new requests. (For tests)
+     * @var bool
+     */
     protected $no_reset = false;
 
     use GuardHelpers;
@@ -136,7 +138,7 @@ class TokenGuard implements Guard
      */
     public function user()
     {
-        if (! is_null($this->user)) {
+        if ($this->user !== null) {
             return $this->user;
         }
 
@@ -196,7 +198,7 @@ class TokenGuard implements Guard
      */
     protected function hasValidCredentials($user, $credentials)
     {
-        return ! is_null($user) && $this->provider->validateCredentials($user, $credentials);
+        return $user !== null && $this->provider->validateCredentials($user, $credentials);
     }
 
     /**
