@@ -2,15 +2,15 @@
 
 namespace DigitSoft\LaravelTokenAuth;
 
-use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
-use DigitSoft\LaravelTokenAuth\Contracts\Storage;
-use DigitSoft\LaravelTokenAuth\Contracts\TokenGuard as TokenGuardContract;
-use DigitSoft\LaravelTokenAuth\Guards\TokenGuard;
-use DigitSoft\LaravelTokenAuth\Session\TokenSessionHandler;
 use Illuminate\Auth\AuthManager;
 use Illuminate\Foundation\Application;
 use Illuminate\Session\SessionManager;
 use Illuminate\Support\ServiceProvider;
+use DigitSoft\LaravelTokenAuth\Contracts\Storage;
+use DigitSoft\LaravelTokenAuth\Guards\TokenGuard;
+use DigitSoft\LaravelTokenAuth\Session\TokenSessionHandler;
+use DigitSoft\LaravelTokenAuth\Contracts\TokenGuard as TokenGuardContract;
+use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 
 /**
  * Class AuthServiceProvider
@@ -34,6 +34,7 @@ class AuthServiceProvider extends ServiceProvider
         } else {
             $publishPath = base_path('config/auth-token.php');
         }
+
         $this->publishes([$configPath => $publishPath], 'config');
     }
 
@@ -74,8 +75,8 @@ class AuthServiceProvider extends ServiceProvider
         $this->app->bind('auth-token.token', function ($app, $params = []) {
             /** @var Application $app */
             $tokenClass = $app['config']['auth-token.token_class'];
-            $token = $app->make($tokenClass, $params);
-            return $token;
+
+            return $app->make($tokenClass, $params);
         });
 
         $this->app->alias('auth-token.token', AccessTokenContract::class);
@@ -108,7 +109,7 @@ class AuthServiceProvider extends ServiceProvider
             /** @var Application $app */
             /** @var AuthManager $auth */
             $guard = $auth->guard('api');
-            if (!$guard instanceof TokenGuardContract) {
+            if (! $guard instanceof TokenGuardContract) {
                 throw new \Exception('Guard "api" has invalid configuration');
             }
             return $guard;

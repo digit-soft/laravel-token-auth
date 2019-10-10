@@ -2,14 +2,15 @@
 
 namespace DigitSoft\LaravelTokenAuth;
 
-use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
+use Illuminate\Queue\SerializesModels;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
 use DigitSoft\LaravelTokenAuth\Facades\TokenCached;
 use DigitSoft\LaravelTokenAuth\Traits\TracksPropertiesChanges;
-use Illuminate\Queue\SerializesModels;
+use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 
 /**
  * Class AccessToken
+ *
  * @package DigitSoft\LaravelTokenAuth
  * @OA\Property("user_id",example=1,description="User ID")
  * @OA\Property("token",type="string",description="Token string")
@@ -24,42 +25,50 @@ class AccessToken implements AccessTokenContract
 
     /**
      * User ID
+     *
      * @var int
      */
-    public $user_id = self::USER_ID_GUEST;
+    public $user_id = AccessTokenContract::USER_ID_GUEST;
     /**
      * Token value
+     *
      * @var string
      */
     public $token;
     /**
      * Token issued at time
+     *
      * @var int|null
      */
     public $iat;
     /**
      * Token time to live
+     *
      * @var int|null
      */
     public $ttl;
     /**
      * Token expire time
+     *
      * @var int|null
      */
     public $exp;
     /**
      * Token client ID
+     *
      * @var string
      */
     public $client_id;
     /**
      * Session data serialized
+     *
      * @var string
      */
     public $session;
 
     /**
      * Cached reflection class
+     *
      * @var \ReflectionClass
      */
     protected $reflection;
@@ -69,20 +78,23 @@ class AccessToken implements AccessTokenContract
     protected $storage;
     /**
      * Guarded properties
+     *
      * @var array
      */
     protected $guarded = ['session'];
     /**
      * Saved in storage or not
+     *
      * @var bool
      */
     protected $saved = false;
 
     /**
      * Token constructor.
-     * @param Storage $storage
-     * @param array   $config
-     * @param bool    $fromStorage
+     *
+     * @param  Storage $storage
+     * @param  array   $config
+     * @param  bool    $fromStorage
      */
     public function __construct(Storage $storage, $config = [], $fromStorage = false)
     {
@@ -97,9 +109,10 @@ class AccessToken implements AccessTokenContract
     }
 
     /**
-     * Set time to live for token
-     * @param int  $ttl
-     * @param bool $overwriteTimestamps
+     * Set time to live for token.
+     *
+     * @param  int  $ttl
+     * @param  bool $overwriteTimestamps
      */
     public function setTtl($ttl = 60, $overwriteTimestamps = true)
     {
@@ -111,16 +124,18 @@ class AccessToken implements AccessTokenContract
     }
 
     /**
-     * Check that token was expired
+     * Check that token was expired.
+     *
      * @return bool
      */
     public function isExpired()
     {
-        return isset($this->ttl) && isset($this->exp) && $this->exp < now()->timestamp;
+        return isset($this->ttl, $this->exp) && $this->exp < now()->timestamp;
     }
 
     /**
      * Check that this is guest token
+     *
      * @return bool
      */
     public function isGuest()
@@ -129,23 +144,26 @@ class AccessToken implements AccessTokenContract
     }
 
     /**
-     * Save token to storage
+     * Save token to storage.
+     *
      * @return bool
      */
     public function save()
     {
-        if (!isset($this->iat)) {
+        if (! isset($this->iat)) {
             $this->iat = now()->timestamp;
         }
-        if($this->needToSave() && $this->storage->setToken($this)) {
+        if ($this->needToSave() && $this->storage->setToken($this)) {
             $this->saved = true;
             $this->rememberState();
         }
+
         return $this->saved;
     }
 
     /**
-     * Get saved flag
+     * Get saved flag.
+     *
      * @return bool
      */
     public function saved()
@@ -154,7 +172,8 @@ class AccessToken implements AccessTokenContract
     }
 
     /**
-     * Remove token from storage
+     * Remove token from storage.
+     *
      * @return bool
      */
     public function remove()
@@ -163,17 +182,20 @@ class AccessToken implements AccessTokenContract
     }
 
     /**
-     * Regenerate token
-     * @param bool $save
+     * Regenerate token.
+     *
+     * @param  bool $save
      */
     public function regenerate($save = false)
     {
         if ($save) {
             $this->remove();
         }
+
         $this->token = null;
         $this->ensureUniqueness();
         $this->setTtl($this->ttl, true);
+
         if ($save) {
             $this->save();
         }
@@ -185,6 +207,7 @@ class AccessToken implements AccessTokenContract
     public function toJson($options = 0, $withGuarded = false)
     {
         $data = $this->toArray($withGuarded);
+
         return json_encode($data, $options);
     }
 
@@ -203,15 +226,17 @@ class AccessToken implements AccessTokenContract
         $data = [];
         foreach ($reflection->getProperties(\ReflectionProperty::IS_PUBLIC) as $property) {
             $propertyName = $property->getName();
-            if (!$property->isStatic() && ($withGuarded || !in_array($propertyName, $this->guarded))) {
+            if (! $property->isStatic() && ($withGuarded || ! in_array($propertyName, $this->guarded, true))) {
                 $data[$propertyName] = $this->{$propertyName};
             }
         }
+
         return $data;
     }
 
     /**
-     * Return object string representation
+     * Return object string representation.
+     *
      * @return string
      */
     public function __toString()
@@ -220,8 +245,9 @@ class AccessToken implements AccessTokenContract
     }
 
     /**
-     * Setter for storage
-     * @param Storage $storage
+     * Setter for storage.
+     *
+     * @param  Storage $storage
      */
     public function setStorage(Storage $storage)
     {
@@ -229,7 +255,8 @@ class AccessToken implements AccessTokenContract
     }
 
     /**
-     * Getter for storage
+     * Getter for storage.
+     *
      * @return Storage
      */
     public function getStorage()
@@ -238,7 +265,8 @@ class AccessToken implements AccessTokenContract
     }
 
     /**
-     * Force token unique check and ID regeneration
+     * Force token unique check and ID regeneration.
+     *
      * @return $this
      */
     public function ensureUniqueness()
@@ -249,12 +277,14 @@ class AccessToken implements AccessTokenContract
         while ($this->storage->tokenExists($this->token)) {
             $this->token = TokenCached::generateTokenStr();
         }
+
         return $this;
     }
 
     /**
-     * Configure object
-     * @param array $config
+     * Configure object.
+     *
+     * @param  array $config
      */
     protected function configureSelf($config = [])
     {
@@ -266,11 +296,12 @@ class AccessToken implements AccessTokenContract
     }
 
     /**
-     * Check that object need to be saved to storage
+     * Check that object need to be saved to storage.
+     *
      * @return bool
      */
     protected function needToSave()
     {
-        return !$this->saved || $this->isChanged();
+        return ! $this->saved || $this->isChanged();
     }
 }

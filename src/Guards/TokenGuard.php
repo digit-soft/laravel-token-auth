@@ -16,6 +16,8 @@ use DigitSoft\LaravelTokenAuth\Contracts\TokenGuard as Guard;
  */
 class TokenGuard implements Guard
 {
+    use GuardHelpers;
+
     /**
      * @var Request
      */
@@ -38,13 +40,12 @@ class TokenGuard implements Guard
      */
     protected $no_reset = false;
 
-    use GuardHelpers;
-
     /**
      * TokenGuard constructor.
-     * @param UserProvider $userProvider
-     * @param Request      $request
-     * @param string       $inputKey
+     *
+     * @param  UserProvider $userProvider
+     * @param  Request      $request
+     * @param  string       $inputKey
      */
     public function __construct(UserProvider $userProvider, Request $request, $inputKey = 'api_token')
     {
@@ -56,11 +57,11 @@ class TokenGuard implements Guard
     /**
      * Setter for request
      *
-     * @param Request $request
+     * @param  Request $request
      */
     public function setRequest(Request $request)
     {
-        if (!$this->no_reset && $this->request !== $request) {
+        if (! $this->no_reset && $this->request !== $request) {
             $this->reset();
         }
         $this->request = $request;
@@ -91,7 +92,10 @@ class TokenGuard implements Guard
     }
 
     /**
+     * Get storage instance.
+     *
      * @return Storage
+     * @throws null
      */
     public function getStorage()
     {
@@ -106,6 +110,7 @@ class TokenGuard implements Guard
      */
     public function once(array $credentials = [])
     {
+        /** @noinspection NotOptimalIfConditionsInspection */
         if ($this->validate($credentials) && ($user = $this->lastAttempted) !== null) {
             /** @var \Illuminate\Contracts\Auth\Authenticatable|HasTokens $user */
             $this->setUser($user);
@@ -120,7 +125,7 @@ class TokenGuard implements Guard
     /**
      * Log a user into the application without sessions or cookies externally checked and got.
      *
-     * @param \Illuminate\Contracts\Auth\Authenticatable|HasTokens $user
+     * @param  \Illuminate\Contracts\Auth\Authenticatable|HasTokens $user
      * @return bool
      */
     public function onceExternal($user)
@@ -128,6 +133,7 @@ class TokenGuard implements Guard
         $this->lastAttempted = $user;
         $this->setUser($user);
         $this->setToken($user->getToken());
+
         return $this->token !== null;
     }
 
@@ -156,7 +162,8 @@ class TokenGuard implements Guard
     }
 
     /**
-     * Get access token object for current request
+     * Get access token object for current request.
+     *
      * @return AccessToken|null
      */
     public function token()
@@ -164,12 +171,14 @@ class TokenGuard implements Guard
         if ($this->token === null && ($tokenRequest = $this->getTokenForRequest()) !== null && TokenCached::validateTokenStr($tokenRequest)) {
             $this->token = $this->getStorage()->getToken($tokenRequest);
         }
+
         return $this->token;
     }
 
     /**
-     * Set token object
-     * @param AccessToken $token
+     * Set token object.
+     *
+     * @param  AccessToken $token
      */
     public function setToken(AccessToken $token)
     {
@@ -179,7 +188,7 @@ class TokenGuard implements Guard
     /**
      * Validate a user's credentials.
      *
-     * @param array $credentials
+     * @param  array $credentials
      * @return bool
      */
     public function validate(array $credentials = [])
@@ -192,8 +201,8 @@ class TokenGuard implements Guard
     /**
      * Determine if the user matches the credentials.
      *
-     * @param  mixed  $user
-     * @param  array  $credentials
+     * @param  mixed $user
+     * @param  array $credentials
      * @return bool
      */
     protected function hasValidCredentials($user, $credentials)
@@ -202,7 +211,7 @@ class TokenGuard implements Guard
     }
 
     /**
-     * Reset guard state
+     * Reset guard state.
      */
     public function reset()
     {
@@ -212,7 +221,7 @@ class TokenGuard implements Guard
     }
 
     /**
-     * Make guard not `resetable` for tests
+     * MAKE GUARD NOT `RESETable` FOR TESTS
      */
     public function fake()
     {

@@ -4,33 +4,39 @@ namespace DigitSoft\LaravelTokenAuth\Traits;
 
 /**
  * Trait TracksPropertiesChanges
+ *
  * @package DigitSoft\LaravelTokenAuth\Traits
  */
 trait TracksPropertiesChanges
 {
     /**
      * Properties list with values
+     *
      * @var array
      */
     protected $_state = [];
     /**
      * Reflection for class
+     *
      * @var \ReflectionClass|null
      */
     protected $_reflection;
 
     /**
-     * Check that object properties was changed after last saved state
+     * Check that object properties was changed after last saved state.
+     *
      * @return bool
      */
     public function isChanged()
     {
         $changed = $this->getChangedProperties();
-        return !empty($changed);
+
+        return ! empty($changed);
     }
 
     /**
-     * Get changed properties array
+     * Get changed properties array.
+     *
      * @return array
      */
     public function getChangedProperties()
@@ -38,6 +44,7 @@ trait TracksPropertiesChanges
         if (empty($this->_state)) {
             return $this->grabPropertiesState();
         }
+
         $changed = [];
         foreach ($this->_state as $property => $value) {
             if ($this->{$property} === $value) {
@@ -45,11 +52,12 @@ trait TracksPropertiesChanges
             }
             $changed[$property] = $this->{$property};
         }
+
         return $changed;
     }
 
     /**
-     * Remember objects state
+     * Remember objects state.
      */
     public function rememberState()
     {
@@ -57,7 +65,8 @@ trait TracksPropertiesChanges
     }
 
     /**
-     * Restore properties to saved state
+     * Restore properties to saved state.
+     *
      * @return bool
      */
     public function restoreState()
@@ -65,15 +74,19 @@ trait TracksPropertiesChanges
         if (empty($this->_state)) {
             return false;
         }
+
         foreach ($this->_state as $property => $value) {
             $this->{$property} = $value;
         }
+
         return true;
     }
 
     /**
-     * Grab properties state
+     * Grab properties state.
+     *
      * @return array
+     * @throws null
      */
     private function grabPropertiesState()
     {
@@ -88,6 +101,7 @@ trait TracksPropertiesChanges
             }
             $state[$name] = $this->{$name};
         }
+
         return $state;
     }
 }
