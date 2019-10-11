@@ -10,6 +10,7 @@ use DigitSoft\LaravelTokenAuth\Eloquent\HasTokens;
 use DigitSoft\LaravelTokenAuth\Facades\TokenCached;
 use DigitSoft\LaravelTokenAuth\Contracts\AccessToken;
 use DigitSoft\LaravelTokenAuth\Contracts\TokenGuard as Guard;
+use DigitSoft\LaravelTokenAuth\Contracts\AlteredByAccessToken;
 
 /**
  * Class TokenGuard
@@ -156,6 +157,11 @@ class TokenGuard implements Guard
 
         if ($userId !== null) {
             $user = $this->provider->retrieveById($userId);
+        }
+
+        // Set access token object
+        if ($token !== null && $user instanceof AlteredByAccessToken) {
+            $user->setAccessToken($token);
         }
 
         return $this->user = $user;

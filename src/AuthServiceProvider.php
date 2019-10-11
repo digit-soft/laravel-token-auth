@@ -119,6 +119,12 @@ class AuthServiceProvider extends ServiceProvider
 
         $this->app->resolving('auth', function ($auth) {
             /** @var AuthManager $auth */
+            // Register provider
+            $auth->provider('eloquent-token', function ($app, $config) {
+                return new EloquentUserProvider($app['hash'], $config['model'], $config['model_guest']);
+            });
+
+            // Register driver
             $auth->extend('token-cached', function ($app, $name, $config) {
                 /** @var Application $app */
                 /** @var AuthManager $auth */
