@@ -63,36 +63,42 @@ trait StorageHelpers
     protected function getUserTokenKey($token, $user_id = null)
     {
         $user_id = $user_id === null && $token instanceof AccessToken ? $token->user_id : $user_id;
+
         return $this->getUserKey($user_id) . ':' . (string)$token;
     }
 
     /**
-     * Get token key prefix from config
+     * Get token key prefix from config.
+     *
      * @return string
      */
     protected function getTokenKeyPrefix()
     {
-        if (!isset($this->_tokenPrefix)) {
+        if (! isset($this->_tokenPrefix)) {
             $this->_tokenPrefix = config('auth-token.token_prefix', '');
         }
+
         return $this->_tokenPrefix;
     }
 
     /**
-     * Get user key prefix from config
+     * Get user key prefix from config.
+     *
      * @return string
      */
     protected function getUserKeyPrefix()
     {
-        if (!isset($this->_userPrefix)) {
+        if (! isset($this->_userPrefix)) {
             $this->_userPrefix = config('auth-token.user_prefix', '');
         }
+
         return $this->_userPrefix;
     }
 
     /**
-     * Serialize data to json
-     * @param array $data
+     * Serialize data to json.
+     *
+     * @param  array $data
      * @return string
      */
     protected function serializeData($data = [])
@@ -101,13 +107,15 @@ trait StorageHelpers
     }
 
     /**
-     * Unserialize JSON data
-     * @param string $dataStr
+     * Unserialize JSON data.
+     *
+     * @param  string $dataStr
      * @return array|null
      */
     protected function unserializeData($dataStr)
     {
         $data = @json_decode($dataStr, true);
+
         return is_array($data) ? $data : null;
     }
 }
