@@ -2,10 +2,10 @@
 
 namespace DigitSoft\LaravelTokenAuth\Middleware;
 
-use DigitSoft\LaravelTokenAuth\Contracts\TokenGuard;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use DigitSoft\LaravelTokenAuth\Contracts\TokenGuard;
 
 /**
  * Class AddGeneratedTokenToResponse.
@@ -19,18 +19,19 @@ class AddGeneratedTokenToResponse
     /**
      * Handle request.
      *
-     * @param Request $request
-     * @param \Closure $next
+     * @param  Request  $request
+     * @param  \Closure $next
      * @return \Symfony\Component\HttpFoundation\Response
      */
     public function handle($request, \Closure $next)
     {
         /** @var Response $response */
         $response = $next($request);
-        if (($token = $this->getTokenGenerated()) === null || !method_exists($response, 'header')) {
+        if (($token = $this->getTokenGenerated()) === null || ! method_exists($response, 'header')) {
             return $response;
         }
         $response->header(config('auth-token.response_token_header'), $token->token);
+
         return $response;
     }
 
@@ -44,9 +45,10 @@ class AddGeneratedTokenToResponse
     protected function getTokenGenerated()
     {
         $guard = Auth::guard();
-        if (!$guard instanceof TokenGuard || ($token = $guard->token()) === null) {
+        if (! $guard instanceof TokenGuard || ($token = $guard->token()) === null) {
             return null;
         }
+
         return $token->saved() && $token->token !== $guard->getTokenForRequest() ? $token : null;
     }
 }
