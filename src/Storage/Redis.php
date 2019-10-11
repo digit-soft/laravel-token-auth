@@ -2,14 +2,13 @@
 
 namespace DigitSoft\LaravelTokenAuth\Storage;
 
-use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
-use DigitSoft\LaravelTokenAuth\Contracts\Storage;
 use Illuminate\Config\Repository;
 use Illuminate\Redis\RedisManager;
+use DigitSoft\LaravelTokenAuth\Contracts\Storage;
 use DigitSoft\LaravelTokenAuth\Facades\TokenCached;
+use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 
 /**
- * Class Redis.
  * Redis storage component.
  * @package DigitSoft\LaravelTokenAuth\Storage
  */
@@ -28,8 +27,9 @@ class Redis implements Storage
 
     /**
      * Redis storage constructor.
-     * @param Repository   $config
-     * @param RedisManager $manager
+     *
+     * @param  Repository   $config
+     * @param  RedisManager $manager
      */
     public function __construct(Repository $config, RedisManager $manager)
     {
@@ -38,7 +38,9 @@ class Redis implements Storage
     }
 
     /**
-     * @param RedisManager $manager
+     * Set REDIS manager.
+     *
+     * @param  RedisManager $manager
      */
     public function setManager($manager)
     {
@@ -47,6 +49,7 @@ class Redis implements Storage
 
     /**
      * Get manager connection
+     *
      * @return \Illuminate\Redis\Connections\Connection
      */
     public function getConnection()
@@ -55,9 +58,10 @@ class Redis implements Storage
     }
 
     /**
-     * Get user tokens list by ID
-     * @param int  $user_id
-     * @param bool $load
+     * Get user tokens list by ID.
+     *
+     * @param  int  $user_id
+     * @param  bool $load
      * @return AccessTokenContract[]
      */
     public function getUserTokens($user_id, $load = false)
@@ -72,7 +76,7 @@ class Redis implements Storage
             return [];
         }
         $tokensMissing = $this->filterTokens($tokens, true);
-        if (!empty($tokensMissing)) {
+        if (! empty($tokensMissing)) {
             $keysToRemove = [];
             foreach ($tokensMissing as $tokenId) {
                 $keysToRemove[] = $this->getUserTokenKey($tokenId, $user_id);
@@ -84,13 +88,15 @@ class Redis implements Storage
         if ($load) {
             $tokens = $this->getTokens($tokens);
         }
+
         return $tokens;
     }
 
     /**
-     * Set user => tokens assignments list
-     * @param int                   $user_id
-     * @param AccessTokenContract[] $tokens
+     * Set user => tokens assignments list.
+     *
+     * @param  int                   $user_id
+     * @param  AccessTokenContract[] $tokens
      */
     public function setUserTokens($user_id, $tokens = [])
     {
@@ -122,23 +128,26 @@ class Redis implements Storage
     }
 
     /**
-     * Get user token content
-     * @param string $tokenId
+     * Get user token content.
+     *
+     * @param  string $tokenId
      * @return AccessTokenContract|null
      */
     public function getToken($tokenId)
     {
         $key = $this->getTokenKey($tokenId);
         $dataStr = $this->getConnection()->get($key);
-        if (!empty($dataStr) && ($data = $this->unserializeData($dataStr)) !== null) {
+        if (! empty($dataStr) && ($data = $this->unserializeData($dataStr)) !== null) {
             return TokenCached::createFromData($data, true);
         }
+
         return null;
     }
 
     /**
-     * Get user tokens content (multiple)
-     * @param string[] $tokenIds
+     * Get user tokens content (multiple).
+     *
+     * @param  string[] $tokenIds
      * @return AccessTokenContract[]
      */
     public function getTokens($tokenIds)
@@ -146,21 +155,24 @@ class Redis implements Storage
         if (empty($tokenIds)) {
             return [];
         }
+
         $tokenKeys = $this->getTokenKeys($tokenIds);
         $rows = $this->getConnection()->mget($tokenKeys);
         $result = [];
         foreach ($rows as $index => $dataStr) {
-            if (!isset($dataStr) || ($data = $this->unserializeData($dataStr)) === null) {
+            if (! isset($dataStr) || ($data = $this->unserializeData($dataStr)) === null) {
                 continue;
             }
             $result[$tokenIds[$index]] = TokenCached::createFromData($data, true);
         }
+
         return $result;
     }
 
     /**
-     * Set user token content
-     * @param AccessTokenContract $token
+     * Set user token content.
+     *
+     * @param  AccessTokenContract $token
      * @return bool
      */
     public function setToken($token)
@@ -168,8 +180,10 @@ class Redis implements Storage
         $ttl = $this->getTokenRealTtl($token);
         if (isset($ttl) && $ttl <= 0) {
             $this->removeToken($token);
+
             return false;
         }
+
         $value = $this->serializeData($token->toArray(true));
         $key = $this->getTokenKey($token);
         if ($ttl !== null) {
@@ -179,12 +193,14 @@ class Redis implements Storage
             $this->getConnection()->set($key, $value);
             $this->addUserToken($token);
         }
+
         return true;
     }
 
     /**
-     * Remove user token and its content
-     * @param AccessTokenContract $token
+     * Remove user token and its content.
+     *
+     * @param  AccessTokenContract $token
      * @return bool
      */
     public function removeToken($token)
@@ -192,18 +208,21 @@ class Redis implements Storage
         $tokenKey = $this->getTokenKey($token);
         $this->getConnection()->expire($tokenKey, 0);
         $this->removeUserToken($token);
+
         return true;
     }
 
     /**
-     * Check that token record exists in storage
-     * @param AccessTokenContract|string $token
+     * Check that token record exists in storage.
+     *
+     * @param  AccessTokenContract|string $token
      * @return bool
      */
     public function tokenExists($token)
     {
         $key = $this->getTokenKey($token);
         $exists = (int)$this->getConnection()->exists($key);
+
         return $exists > 0;
     }
 
@@ -226,8 +245,9 @@ class Redis implements Storage
     }
 
     /**
-     * Remove user => token assignment
-     * @param AccessTokenContract $token
+     * Remove user => token assignment.
+     *
+     * @param  AccessTokenContract $token
      */
     protected function removeUserToken($token)
     {
@@ -236,9 +256,10 @@ class Redis implements Storage
     }
 
     /**
-     * Filter not valid tokens
-     * @param string[] $tokenIds
-     * @param bool     $returnMissing
+     * Filter not valid tokens.
+     *
+     * @param  string[] $tokenIds
+     * @param  bool     $returnMissing
      * @return array
      */
     protected function filterTokens($tokenIds, $returnMissing = false)
@@ -248,30 +269,33 @@ class Redis implements Storage
         $missing = [];
         $existing = [];
         foreach ($tokenIds as $num => $data) {
-            if (!isset($records[$num])) {
+            if (! isset($records[$num])) {
                 $missing[] = $tokenIds[$num];
                 continue;
             }
             $existing[] = $tokenIds[$num];
         }
+
         return $returnMissing ? $missing : $existing;
     }
 
     /**
-     * Get user token keys
-     * @param int $user_id
+     * Get user token keys.
+     *
+     * @param  int $user_id
      * @return array
      */
     protected function getUserTokenStorageKeys($user_id)
     {
         $key = $this->getUserKey($user_id);
-        $keys = $this->getConnection()->keys($key . ":*");
-        return $keys;
+
+        return $this->getConnection()->keys($key . ':*');
     }
 
     /**
      * Get AccessToken real TTL
-     * @param AccessTokenContract $token
+     *
+     * @param  AccessTokenContract $token
      * @return int|null
      */
     protected function getTokenRealTtl(AccessTokenContract $token)
@@ -281,9 +305,9 @@ class Redis implements Storage
             return null;
         }
         if (isset($token->exp)) {
-            $ttl = intval($token->exp - $now);
+            $ttl = (int)($token->exp - $now);
         } else {
-            $token->exp = intval($now + $token->ttl);
+            $token->exp = (int)($now + $token->ttl);
             $ttl = $token->ttl;
         }
         return $ttl > 0 ? $ttl : -1;

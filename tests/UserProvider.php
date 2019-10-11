@@ -2,9 +2,9 @@
 
 namespace DigitSoft\LaravelTokenAuth\Tests;
 
+use Illuminate\Support\Str;
 use Illuminate\Auth\EloquentUserProvider;
 use Illuminate\Contracts\Auth\Authenticatable as UserContract;
-use Illuminate\Support\Str;
 
 /**
  * Class UserProvider. Uses array as repository
@@ -20,6 +20,7 @@ class UserProvider extends EloquentUserProvider
     public function retrieveById($identifier)
     {
         $idColumn = $this->createModel()->getAuthIdentifierName();
+
         return $this->retrieveByCredentialsInternal([$idColumn => $identifier]);
     }
 
@@ -28,9 +29,10 @@ class UserProvider extends EloquentUserProvider
      */
     public function retrieveByCredentials(array $credentials)
     {
-        if (empty($credentials) ||
-            (count($credentials) === 1 &&
-                array_key_exists('password', $credentials))) {
+        if (
+            empty($credentials) ||
+            (count($credentials) === 1 && array_key_exists('password', $credentials))
+        ) {
             return;
         }
 
@@ -62,6 +64,14 @@ class UserProvider extends EloquentUserProvider
         return null;
     }
 
+    /**
+     * Retrieve user model by given credentials.
+     *
+     * Internal usage.
+     *
+     * @param  array $credentials
+     * @return \Illuminate\Database\Eloquent\Model|null
+     */
     protected function retrieveByCredentialsInternal(array $credentials)
     {
         foreach ($this->usersArray as $userData) {
@@ -75,9 +85,11 @@ class UserProvider extends EloquentUserProvider
             if ($matched) {
                 $model = $this->createModel();
                 $model->fill($userData);
+
                 return $model;
             }
         }
+
         return null;
     }
 
