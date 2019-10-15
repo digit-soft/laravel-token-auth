@@ -2,13 +2,13 @@
 
 namespace DigitSoft\LaravelTokenAuth\Tests;
 
-use \DigitSoft\LaravelTokenAuth\Facades\TokenCached as AToken;
-use DigitSoft\LaravelTokenAuth\AccessToken;
-use DigitSoft\LaravelTokenAuth\Contracts\Storage as StorageContract;
-use DigitSoft\LaravelTokenAuth\Guards\TokenGuard;
-use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use DigitSoft\LaravelTokenAuth\AccessToken;
+use DigitSoft\LaravelTokenAuth\Guards\TokenGuard;
+use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use DigitSoft\LaravelTokenAuth\Facades\TokenCached as AToken;
+use DigitSoft\LaravelTokenAuth\Contracts\Storage as StorageContract;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -106,11 +106,12 @@ abstract class TestCase extends BaseTestCase
             'token' => $token,
             'client_id' => $client_id,
         ];
-        $tokenObject = new AccessToken($this->getStorage(), $data, $fromStorage);
+        $tokenObject = new AccessToken($data, $fromStorage);
         $tokenObject->setTtl($ttl, true);
         if ($fromStorage) {
             $tokenObject->rememberState();
         }
+
         return $tokenObject;
     }
 

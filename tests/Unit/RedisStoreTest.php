@@ -3,11 +3,10 @@
 namespace DigitSoft\LaravelTokenAuth\Tests\Unit;
 
 use DigitSoft\LaravelTokenAuth\AccessToken;
-use DigitSoft\LaravelTokenAuth\Facades\TokenCached;
+use Illuminate\Redis\Connections\Connection;
 use DigitSoft\LaravelTokenAuth\Storage\Redis;
 use DigitSoft\LaravelTokenAuth\Tests\TestCase;
-use Illuminate\Redis\Connections\Connection;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use DigitSoft\LaravelTokenAuth\Facades\TokenCached;
 
 /**
  * Class RedisStoreTest
@@ -25,7 +24,7 @@ class RedisStoreTest extends TestCase
     public function testConnectionSuccess()
     {
         $connection = $this->getStorageConnection();
-        $this->assertTrue($connection instanceof Connection);
+        $this->assertInstanceOf(Connection::class, $connection);
         $this->assertNotNull($connection->keys('*'));
     }
 
@@ -103,6 +102,9 @@ class RedisStoreTest extends TestCase
 
     public function testUserMassiveTokenAssign()
     {
+        $storage = $this->getStorage();
+        app()->instance('auth-token.storage', $storage);
+
         /** @var \DigitSoft\LaravelTokenAuth\Contracts\AccessToken[] $tokens */
         $tokens = [];
         $tokens[] = $this->createToken(false, TokenCached::generateTokenStr());
@@ -111,19 +113,20 @@ class RedisStoreTest extends TestCase
         foreach ($tokens as $token) {
             $token->save();
         }
-        $tokensFirstRead = $this->getStorage()->getUserTokens($this->token_user_id);
+        $tokensFirstRead = $storage->getUserTokens($this->token_user_id);
         $this->assertNotEmpty($tokensFirstRead, 'First user tokens list read success');
-        $this->getStorage()->setUserTokens($this->token_user_id, $tokens);
-        $tokensSecondRead = $this->getStorage()->getUserTokens($this->token_user_id);
+        $storage->setUserTokens($this->token_user_id, $tokens);
+        $tokensSecondRead = $storage->getUserTokens($this->token_user_id);
         $this->assertNotEmpty($tokensSecondRead, 'Second user tokens list read success');
         $this->assertEquals($tokensFirstRead, $tokensSecondRead, 'First data and second data are equals');
     }
 
     protected function getStorage()
     {
-        if (!isset($this->storage)) {
+        if (! isset($this->storage)) {
             $this->storage = new Redis(config(), $this->app->get('redis'));
         }
+
         return $this->storage;
     }
 

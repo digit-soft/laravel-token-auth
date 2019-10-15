@@ -2,6 +2,7 @@
 
 namespace DigitSoft\LaravelTokenAuth\Tests\Unit;
 
+use Illuminate\Support\Str;
 use DigitSoft\LaravelTokenAuth\Facades\TokenCached;
 use DigitSoft\LaravelTokenAuth\Tests\TestCase;
 use DigitSoft\LaravelTokenAuth\Tests\User;
@@ -16,7 +17,7 @@ class TokenGuardTest extends TestCase
 {
     public function testSuccessAuthByGetParam()
     {
-        list($usersProvider, $user, $storage) = $this->getAuthObjects();
+        [$usersProvider, $user, $storage] = $this->getAuthObjects();
         $request = new Request(['api_token' => $this->token_id]);
         $guard = $this->createGuard($request, $usersProvider);
         $this->assertTrue($guard->check(), 'Auth success by GET param');
@@ -25,7 +26,7 @@ class TokenGuardTest extends TestCase
 
     public function testSuccessAuthByPostParam()
     {
-        list($usersProvider, $user, $storage) = $this->getAuthObjects();
+        [$usersProvider, $user, $storage] = $this->getAuthObjects();
         $request = new Request([], ['api_token' => $this->token_id]);
         $request->setMethod(Request::METHOD_POST);
         $guard = $this->createGuard($request, $usersProvider);
@@ -35,7 +36,7 @@ class TokenGuardTest extends TestCase
 
     public function testSuccessAuthByBearerTokenHeader()
     {
-        list($usersProvider, $user, $storage) = $this->getAuthObjects();
+        [$usersProvider, $user, $storage] = $this->getAuthObjects();
         $request = new Request();
         $request->headers->set('Authorization', 'Bearer ' . $this->token_id);
         $guard = $this->createGuard($request, $usersProvider);
@@ -45,7 +46,7 @@ class TokenGuardTest extends TestCase
 
     public function testSuccessAuthByPhpAuthHeader()
     {
-        list($usersProvider, $user, $storage) = $this->getAuthObjects();
+        [$usersProvider, $user, $storage] = $this->getAuthObjects();
         $request = new Request();
         $request->headers->set('PHP_AUTH_PW', $this->token_id);
         $guard = $this->createGuard($request, $usersProvider);
@@ -55,8 +56,8 @@ class TokenGuardTest extends TestCase
 
     public function testAuthFailOnInvalidCredentials()
     {
-        $falseTokenStr = $this->token_id . str_random(5);
-        list($usersProvider, $user, $storage) = $this->getAuthObjects();
+        $falseTokenStr = $this->token_id . Str::random(5);
+        [$usersProvider, $user, $storage] = $this->getAuthObjects();
         $requestGet = new Request(['api_token' => $falseTokenStr]);
         $requestPost = new Request([], ['api_token' => $falseTokenStr]);
         $requestPost->setMethod(Request::METHOD_POST);
@@ -76,7 +77,7 @@ class TokenGuardTest extends TestCase
 
     public function testCheckAuthUserStatusFunctions()
     {
-        list($usersProvider, $user, $storage) = $this->getAuthObjects();
+        [$usersProvider, $user, $storage] = $this->getAuthObjects();
         $request = new Request(['api_token' => $this->token_id]);
         $guard = $this->createGuard($request, $usersProvider);
         $this->assertTrue($guard->check(), 'User is authorized');
@@ -86,7 +87,7 @@ class TokenGuardTest extends TestCase
 
     public function testReturnValidUserObject()
     {
-        list($usersProvider, $user, $storage) = $this->getAuthObjects();
+        [$usersProvider, $user, $storage] = $this->getAuthObjects();
         $request = new Request(['api_token' => $this->token_id]);
         $guard = $this->createGuard($request, $usersProvider);
         $this->assertInstanceOf(User::class, $guard->user(), 'Returned valid user class');
@@ -96,12 +97,12 @@ class TokenGuardTest extends TestCase
 
     /**
      * @throws \Illuminate\Auth\AuthenticationException
-     * @expectedException \Illuminate\Auth\AuthenticationException
      */
     public function testThrowAnExceptionOnInvalidTokenByAuthenticateMethod()
     {
-        $falseTokenStr = $this->token_id . str_random(5);
-        list($usersProvider, $user, $storage) = $this->getAuthObjects();
+        $this->expectException(\Illuminate\Auth\AuthenticationException::class);
+        $falseTokenStr = $this->token_id . Str::random(5);
+        [$usersProvider, $user, $storage] = $this->getAuthObjects();
         $request = new Request(['api_token' => $falseTokenStr]);
         $guard = $this->createGuard($request, $usersProvider);
         $guard->authenticate();
@@ -109,8 +110,8 @@ class TokenGuardTest extends TestCase
 
     public function testResetAuthStatusOnNewRequest()
     {
-        $falseTokenStr = $this->token_id . str_random(5);
-        list($usersProvider, $user, $storage) = $this->getAuthObjects();
+        $falseTokenStr = $this->token_id . Str::random(5);
+        [$usersProvider, $user, $storage] = $this->getAuthObjects();
         $request = new Request(['api_token' => $this->token_id]);
         $requestNew = new Request(['api_token' => $falseTokenStr]);
         $guard = $this->createGuard($request, $usersProvider);
@@ -121,8 +122,8 @@ class TokenGuardTest extends TestCase
 
     public function testPrimitiveValidation()
     {
-        $falseTokenStr = $this->token_id . str_random(5);
-        list($usersProvider, $user, $storage) = $this->getAuthObjects();
+        $falseTokenStr = $this->token_id . Str::random(5);
+        [$usersProvider, $user, $storage] = $this->getAuthObjects();
         $request = new Request(['api_token' => $this->token_id]);
         $guard = $this->createGuard($request, $usersProvider);
         //password will be skipped
@@ -135,7 +136,7 @@ class TokenGuardTest extends TestCase
     public function testSetNewTokenToGuard()
     {
         $newToken = $this->createToken(10, TokenCached::generateTokenStr());
-        list($usersProvider, $user, $storage) = $this->getAuthObjects();
+        [$usersProvider, $user, $storage] = $this->getAuthObjects();
         $request = new Request(['api_token' => $this->token_id]);
         $requestNew = new Request(['api_token' => $newToken->token]);
         $guard = $this->createGuard($request, $usersProvider);

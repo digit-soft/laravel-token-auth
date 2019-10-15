@@ -64,7 +64,7 @@ class AccessTokenTest extends TestCase
     {
         $token = $this->createToken();
         $tokenArray = $token->toArray();
-        $this->assertTrue(is_array($tokenArray), 'Dump is an array');
+        $this->assertIsArray($tokenArray, 'Dump is an array');
         $this->assertArrayHasKey('token', $tokenArray, 'Dump has key token');
         $this->assertArrayHasKey('user_id', $tokenArray, 'Dump has key user_id');
         $this->assertArrayHasKey('client_id', $tokenArray, 'Dump has key client_id');
@@ -78,8 +78,8 @@ class AccessTokenTest extends TestCase
         $token = $this->createToken();
         $tokenJson = $token->toJson();
         $tokenArray = json_decode($tokenJson, true);
-        $this->assertTrue(is_string($tokenJson), 'JSON is string');
-        $this->assertTrue(is_array($tokenArray), 'JSON is valid');
+        $this->assertIsString($tokenJson, 'JSON is string');
+        $this->assertIsArray($tokenArray, 'JSON is valid');
     }
 
     public function testDumpToString()
@@ -87,42 +87,48 @@ class AccessTokenTest extends TestCase
         $token = $this->createToken();
         $tokenStr1 = $token->__toString();
         $tokenStr2 = (string)$token;
-        $this->assertTrue(is_string($tokenStr1), 'Token ID is string');
+        $this->assertIsString($tokenStr1, 'Token ID is string');
         $this->assertEquals($token->token, $tokenStr1, 'Token IDs are equal');
         $this->assertEquals($tokenStr1, $tokenStr2, 'Strings are equal');
     }
 
-    public function testSettingStorageToTokenObject()
-    {
-        $token = $this->createToken();
-        $newStorage = $this->createStorageMock();
-        $this->assertNotSame($newStorage, $token->getStorage(), 'Storages are not equal');
-        $token->setStorage($newStorage);
-        $this->assertSame($newStorage, $token->getStorage(), 'Storages are equal');
-    }
+    // public function testSettingStorageToTokenObject()
+    // {
+    //     $token = $this->createToken();
+    //     $newStorage = $this->createStorageMock();
+    //     $this->assertNotSame($newStorage, $token->getStorage(), 'Storages are not equal');
+    //     $token->setStorage($newStorage);
+    //     $this->assertSame($newStorage, $token->getStorage(), 'Storages are equal');
+    // }
 
     public function testSaveTokenToStorage()
     {
+        $storage = $this->getStorage();
+        app()->instance('auth-token.storage', $storage);
+
         $token = $this->createToken(null);
-        $this->configureStorageMockForTokenSave($token->getStorage());
-        $this->configureStorageMockForTokenGet($token->getStorage(), $token);
+        $this->configureStorageMockForTokenSave($storage);
+        $this->configureStorageMockForTokenGet($storage, $token);
         $token->iat = null;
         $token->save();
-        $tokenRead = $token->getStorage()->getToken($token->token);
+        $tokenRead = $storage->getToken($token->token);
         $this->assertInstanceOf(AccessTokenContract::class, $tokenRead, 'Token found');
         $this->assertEquals($tokenRead->token, $token->token, 'Found equal token');
     }
 
     public function testRegenerateToken()
     {
+        $storage = $this->getStorage();
+        app()->instance('auth-token.storage', $storage);
+
         $token = $this->createToken(null);
-        $this->configureStorageMockForTokenSave($token->getStorage());
+        $this->configureStorageMockForTokenSave($storage);
         $oldToken = $token->token;
         $token->regenerate(true);
         $newToken = $token->token;
         //$token->save();
-        $this->configureStorageMockForTokenGet($token->getStorage(), $token);
-        $tokenRead = $token->getStorage()->getToken($token->token);
+        $this->configureStorageMockForTokenGet($storage, $token);
+        $tokenRead = $storage->getToken($token->token);
         $this->assertInstanceOf(AccessTokenContract::class, $tokenRead, 'Token found');
         $this->assertEquals($tokenRead->token, $token->token, 'Found equal token');
         $this->assertNotEquals($oldToken, $newToken, 'Regenerated token is different');
@@ -159,13 +165,16 @@ class AccessTokenTest extends TestCase
 
     public function testGetFirstUserTokenAfterSave()
     {
+        $storage = $this->getStorage();
+        app()->instance('auth-token.storage', $storage);
+
         $token = $this->createToken(null);
-        $this->configureStorageMockForTokenSave($token->getStorage());
-        $this->configureStorageMockForTokenGetByUser($token->getStorage(), $token);
+        $this->configureStorageMockForTokenSave($storage);
+        $this->configureStorageMockForTokenGetByUser($storage, $token);
         $token->save();
         $user = $this->createUser();
         $user2 = $this->createUser($this->token_user_id_fake);
-        $this->bindStorage(function () use ($token) { return $token->getStorage(); });
+        $this->bindStorage(function () use ($token, $storage) { return $storage; });
         $tokenRead = TokenCached::getFirstFor($user);
         $tokenReadEmpty = TokenCached::getFirstFor($user, $this->token_client_id . '2');
         $tokenReadEmpty2 = TokenCached::getFirstFor($user2, $this->token_client_id);
@@ -194,9 +203,12 @@ class AccessTokenTest extends TestCase
 
     public function testRemoveTokenFromStorage()
     {
+        $storage = $this->getStorage();
+        app()->instance('auth-token.storage', $storage);
+
         $token = $this->createToken(null);
-        $this->configureStorageMockForTokenSave($token->getStorage());
-        $this->configureStorageMockForTokenRemove($token->getStorage(), $token);
+        $this->configureStorageMockForTokenSave($storage);
+        $this->configureStorageMockForTokenRemove($storage, $token);
         $token->save();
         $token->remove();
     }
