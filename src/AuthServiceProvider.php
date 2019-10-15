@@ -9,6 +9,7 @@ use Illuminate\Support\ServiceProvider;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
 use DigitSoft\LaravelTokenAuth\Guards\TokenGuard;
 use DigitSoft\LaravelTokenAuth\Session\TokenSessionHandler;
+use DigitSoft\LaravelTokenAuth\Traits\WithAuthTokenStorage;
 use DigitSoft\LaravelTokenAuth\Contracts\TokenGuard as TokenGuardContract;
 use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 
@@ -87,6 +88,11 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected function registerStorage()
     {
+        // Register rebinding callback for storage
+        $this->app->rebinding('auth-token.storage', function ($app, $instance) {
+            WithAuthTokenStorage::$_authTokenStorageInstance = $instance;
+        });
+
         $this->app->singleton('auth-token.storage', function ($app) {
             /** @var Application $app */
             $storageClass = $app['config']['auth-token.storage_class'];

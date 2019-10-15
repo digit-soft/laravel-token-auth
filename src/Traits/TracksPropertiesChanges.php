@@ -15,12 +15,6 @@ trait TracksPropertiesChanges
      * @var array
      */
     protected $_state = [];
-    /**
-     * Reflection for class
-     *
-     * @var \ReflectionClass|null
-     */
-    protected $_reflection;
 
     /**
      * Check that object properties was changed after last saved state.
@@ -90,9 +84,10 @@ trait TracksPropertiesChanges
      */
     private function grabPropertiesState()
     {
-        $this->_reflection = $this->_reflection ?? new \ReflectionClass($this);
+        /** @var \ReflectionClass $ref */
+        $ref = $this->getRef();
         $state = [];
-        foreach ($this->_reflection->getProperties(\ReflectionProperty::IS_PUBLIC) as $property) {
+        foreach ($ref->getProperties(\ReflectionProperty::IS_PUBLIC) as $property) {
             $name = $property->getName();
             if ($property->isStatic()) {
                 // @codeCoverageIgnoreStart

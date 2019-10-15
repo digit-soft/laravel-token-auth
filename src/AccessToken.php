@@ -3,8 +3,8 @@
 namespace DigitSoft\LaravelTokenAuth;
 
 use Illuminate\Queue\SerializesModels;
-use DigitSoft\LaravelTokenAuth\Contracts\Storage;
 use DigitSoft\LaravelTokenAuth\Facades\TokenCached;
+use DigitSoft\LaravelTokenAuth\Traits\WithAuthTokenStorage;
 use DigitSoft\LaravelTokenAuth\Traits\TracksPropertiesChanges;
 use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 
@@ -21,7 +21,7 @@ use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
  */
 class AccessToken implements AccessTokenContract
 {
-    use SerializesModels, TracksPropertiesChanges;
+    use SerializesModels, TracksPropertiesChanges, WithAuthTokenStorage;
 
     /**
      * User ID
@@ -67,16 +67,6 @@ class AccessToken implements AccessTokenContract
     public $session;
 
     /**
-     * Cached reflection class
-     *
-     * @var \ReflectionClass
-     */
-    protected $reflection;
-    /**
-     * @var Storage
-     */
-    protected $storage;
-    /**
      * Guarded properties
      *
      * @var array
@@ -90,18 +80,23 @@ class AccessToken implements AccessTokenContract
     protected $saved = false;
 
     /**
+     * Reflection for class
+     *
+     * @var \ReflectionClass
+     */
+    protected $_reflection;
+
+    /**
      * Token constructor.
      *
-     * @param  Storage $storage
      * @param  array   $config
      * @param  bool    $fromStorage
      */
-    public function __construct(Storage $storage, $config = [], $fromStorage = false)
+    public function __construct($config = [], $fromStorage = false)
     {
         $this->client_id = Facades\TokenCached::getDefaultClientId();
         $this->session = serialize([]);
         $this->configureSelf($config);
-        $this->storage = $storage;
         if ($fromStorage) {
             $this->saved = true;
             $this->rememberState();
@@ -144,6 +139,20 @@ class AccessToken implements AccessTokenContract
     }
 
     /**
+     * Get fresh instance of token.
+     *
+     * @return \DigitSoft\LaravelTokenAuth\Contracts\AccessToken|null
+     */
+    public function fresh()
+    {
+        if ($this->token === null) {
+            return null;
+        }
+
+        return static::tokenStorage()->getToken($this->token);
+    }
+
+    /**
      * Save token to storage.
      *
      * @return bool
@@ -153,7 +162,7 @@ class AccessToken implements AccessTokenContract
         if (! isset($this->iat)) {
             $this->iat = now()->timestamp;
         }
-        if ($this->needToSave() && $this->storage->setToken($this)) {
+        if ($this->needToSave() && static::tokenStorage()->setToken($this)) {
             $this->saved = true;
             $this->rememberState();
         }
@@ -178,7 +187,7 @@ class AccessToken implements AccessTokenContract
      */
     public function remove()
     {
-        return $this->storage->removeToken($this);
+        return static::tokenStorage()->removeToken($this);
     }
 
     /**
@@ -217,7 +226,7 @@ class AccessToken implements AccessTokenContract
     public function toArray($withGuarded = false)
     {
         try {
-            $reflection = $this->reflection ?? $this->reflection = new \ReflectionClass($this);
+            $reflection = $this->getRef();
             // @codeCoverageIgnoreStart
         } catch (\ReflectionException $exception) {
             return [];
@@ -245,26 +254,6 @@ class AccessToken implements AccessTokenContract
     }
 
     /**
-     * Setter for storage.
-     *
-     * @param  Storage $storage
-     */
-    public function setStorage(Storage $storage)
-    {
-        $this->storage = $storage;
-    }
-
-    /**
-     * Getter for storage.
-     *
-     * @return Storage
-     */
-    public function getStorage()
-    {
-        return $this->storage;
-    }
-
-    /**
      * Force token unique check and ID regeneration.
      *
      * @return $this
@@ -274,7 +263,7 @@ class AccessToken implements AccessTokenContract
         if ($this->token === null) {
             $this->token = TokenCached::generateTokenStr();
         }
-        while ($this->storage->tokenExists($this->token)) {
+        while (static::tokenStorage()->tokenExists($this->token)) {
             $this->token = TokenCached::generateTokenStr();
         }
 
@@ -303,5 +292,16 @@ class AccessToken implements AccessTokenContract
     protected function needToSave()
     {
         return ! $this->saved || $this->isChanged();
+    }
+
+    /**
+     * Get current class reflection.
+     *
+     * @return \ReflectionClass
+     * @throws null
+     */
+    protected function getRef()
+    {
+        return $this->_reflection ?? new \ReflectionClass($this);
     }
 }

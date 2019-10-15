@@ -2,20 +2,21 @@
 
 namespace DigitSoft\LaravelTokenAuth\Contracts;
 
-use DigitSoft\LaravelTokenAuth\Traits\TracksPropertiesChanges;
-use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
+use Illuminate\Contracts\Support\Arrayable;
+use DigitSoft\LaravelTokenAuth\Traits\TracksPropertiesChanges;
 
 /**
  * Interface AccessToken
+ *
  * @package DigitSoft\LaravelTokenAuth\Contracts
- * @property string|null $token  Token value
- * @property int|null    $user_id  User ID
+ * @property string|null $token      Token value
+ * @property int|null    $user_id    User ID
  * @property string      $client_id  Token client ID
- * @property int|null    $iat  Token issued at time
- * @property int|null    $exp  Token expire time
- * @property int|null    $ttl  Token time to live
- * @property string|null $session  Token session data
+ * @property int|null    $iat        Token issued at time
+ * @property int|null    $exp        Token expire time
+ * @property int|null    $ttl        Token time to live
+ * @property string|null $session    Token session data
  * @mixin TracksPropertiesChanges
  */
 interface AccessToken extends Jsonable, Arrayable
@@ -45,6 +46,13 @@ interface AccessToken extends Jsonable, Arrayable
     public function isGuest();
 
     /**
+     * Get fresh instance of token.
+     *
+     * @return \DigitSoft\LaravelTokenAuth\Contracts\AccessToken|null
+     */
+    public function fresh();
+
+    /**
      * Save token to storage
      * @return bool
      */
@@ -67,18 +75,6 @@ interface AccessToken extends Jsonable, Arrayable
      * @param bool $save
      */
     public function regenerate($save = false);
-
-    /**
-     * Setter storage
-     * @param Storage $storage
-     */
-    public function setStorage(Storage $storage);
-
-    /**
-     * Getter for storage
-     * @return Storage
-     */
-    public function getStorage();
 
     /**
      * Force token unique check and ID regeneration
