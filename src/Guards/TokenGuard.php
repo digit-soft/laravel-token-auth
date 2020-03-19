@@ -115,7 +115,7 @@ class TokenGuard implements Guard
         if ($this->validate($credentials) && ($user = $this->lastAttempted) !== null) {
             /** @var \Illuminate\Contracts\Auth\Authenticatable|HasTokens $user */
             $this->setUser($user);
-            $this->setToken($user->getToken());
+            $this->setToken($user->createToken());
 
             return true;
         }
@@ -133,7 +133,7 @@ class TokenGuard implements Guard
     {
         $this->lastAttempted = $user;
         $this->setUser($user);
-        $this->setToken($user->getToken());
+        $this->setToken($user->createToken());
 
         return $this->token !== null;
     }
