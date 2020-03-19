@@ -23,10 +23,11 @@ class AccessTokenHelper
     }
 
     /**
-     * Get last added user token
-     * @param \Illuminate\Contracts\Auth\Authenticatable $user
-     * @param string                                     $client_id
-     * @param Contracts\Storage|null                     $storage
+     * Get last added user token.
+     *
+     * @param  \Illuminate\Contracts\Auth\Authenticatable $user
+     * @param  string                                     $client_id
+     * @param  Contracts\Storage|null                     $storage
      * @return Contracts\AccessToken|null
      */
     public function getFirstFor(Authenticatable $user, $client_id = null, Storage $storage = null)
@@ -47,6 +48,7 @@ class AccessTokenHelper
                 return $token;
             }
         }
+
         return null;
     }
 
@@ -72,8 +74,8 @@ class AccessTokenHelper
         if ($autoTtl) {
             $token->setTtl(config('auth-token.ttl'));
         }
-        $event = new AccessTokenCreated($token);
-        event($event);
+        AccessTokenCreated::dispatch($token);
+
         return $token;
     }
 
@@ -117,7 +119,29 @@ class AccessTokenHelper
     }
 
     /**
+     * Remove all tokens for a user.
+     *
+     * @param  \Illuminate\Contracts\Auth\Authenticatable $user
+     */
+    public function removeAllFor(Authenticatable $user)
+    {
+        if (($userId = $user->getAuthIdentifier()) === null) {
+            return;
+        }
+        /** @var Storage $storage */
+        $storage = app()->make(Storage::class);
+        $list = $storage->getUserTokens($userId, true);
+        if (empty($list)) {
+            return;
+        }
+        foreach ($list as $token) {
+            $storage->removeToken($token);
+        }
+    }
+
+    /**
      * Get default client ID
+     *
      * @return string
      */
     public function getDefaultClientId()
@@ -133,12 +157,13 @@ class AccessTokenHelper
      */
     public function getClientIdFromRequest(Request $request)
     {
-        if (($clientId = $request->input(AccessTokenContract::REQUEST_CLIENT_ID_PARAM)) !== null && static::validateClientId($clientId)) {
+        if (($clientId = $request->input(AccessTokenContract::REQUEST_CLIENT_ID_PARAM)) !== null && $this->validateClientId($clientId)) {
             return $clientId;
         }
-        if (($clientId = $request->header(AccessTokenContract::REQUEST_CLIENT_ID_HEADER)) !== null && static::validateClientId($clientId)) {
+        if (($clientId = $request->header(AccessTokenContract::REQUEST_CLIENT_ID_HEADER)) !== null && $this->validateClientId($clientId)) {
             return $clientId;
         }
+
         return $this->getDefaultClientId();
     }
 

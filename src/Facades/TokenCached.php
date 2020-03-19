@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static \DigitSoft\LaravelTokenAuth\Contracts\AccessToken createFor(\Illuminate\Contracts\Auth\Authenticatable $user, $client_id = null, $autoTtl = true)
  * @method static \DigitSoft\LaravelTokenAuth\Contracts\AccessToken createForGuest($client_id = null, $autoTtl = true)
  * @method static \DigitSoft\LaravelTokenAuth\Contracts\AccessToken createFromData($data = [], $fromStorage = false)
+ * @method static void removeAllFor(\Illuminate\Contracts\Auth\Authenticatable $user)
  * @method static string getDefaultClientId()
  * @method static string getClientIdFromRequest(\Illuminate\Http\Request $request)
  * @method static string generateTokenStr()

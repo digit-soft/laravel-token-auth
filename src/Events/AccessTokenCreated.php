@@ -3,18 +3,19 @@
 namespace DigitSoft\LaravelTokenAuth\Events;
 
 use App\Events\Event;
-use DigitSoft\LaravelTokenAuth\Contracts\AccessToken;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Foundation\Events\Dispatchable;
+use DigitSoft\LaravelTokenAuth\Contracts\AccessToken;
 
 /**
  * Event AccessTokenCreated.
  * You can use this event to fill token fields with own data
  *
- * @package DigitSoft\LaravelTokenAuth\Events
+ * @method static void dispatch(AccessToken $token)
  */
 class AccessTokenCreated extends Event
 {
-    use SerializesModels;
+    use Dispatchable, SerializesModels;
 
     /**
      * @var \DigitSoft\LaravelTokenAuth\Contracts\AccessToken
@@ -23,6 +24,7 @@ class AccessTokenCreated extends Event
 
     /**
      * AccessTokenCreated constructor.
+     *
      * @param \DigitSoft\LaravelTokenAuth\Contracts\AccessToken $token
      */
     public function __construct(AccessToken $token)
