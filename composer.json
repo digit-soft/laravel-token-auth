@@ -1,6 +1,6 @@
 {
     "name": "digit-soft/laravel-token-auth",
-    "version": "2.0.1",
+    "version": "2.0.2",
     "description": "Laravel token auth cached.",
     "keywords": ["laravel token auth", "auth", "tokens", "stateless auth"],
     "license": "MIT",
@@ -11,7 +11,7 @@
         }
     ],
     "require": {
-        "php": ">=7.1",
+        "php": ">=7.3",
         "laravel/framework": "^8.0"
     },
     "autoload": {
