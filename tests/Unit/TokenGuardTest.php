@@ -20,8 +20,8 @@ class TokenGuardTest extends TestCase
         [$usersProvider, $user, $storage] = $this->getAuthObjects();
         $request = new Request(['api_token' => $this->token_id]);
         $guard = $this->createGuard($request, $usersProvider);
-        $this->assertTrue($guard->check(), 'Auth success by GET param');
-        $this->assertInstanceOf(User::class, $guard->user(), 'Got valid user object');
+        static::assertTrue($guard->check(), 'Auth success by GET param');
+        static::assertInstanceOf(User::class, $guard->user(), 'Got valid user object');
     }
 
     public function testSuccessAuthByPostParam()
@@ -30,8 +30,8 @@ class TokenGuardTest extends TestCase
         $request = new Request([], ['api_token' => $this->token_id]);
         $request->setMethod(Request::METHOD_POST);
         $guard = $this->createGuard($request, $usersProvider);
-        $this->assertTrue($guard->check(), 'Auth success by POST param');
-        $this->assertInstanceOf(User::class, $guard->user(), 'Got valid user object');
+        static::assertTrue($guard->check(), 'Auth success by POST param');
+        static::assertInstanceOf(User::class, $guard->user(), 'Got valid user object');
     }
 
     public function testSuccessAuthByBearerTokenHeader()
@@ -40,8 +40,8 @@ class TokenGuardTest extends TestCase
         $request = new Request();
         $request->headers->set('Authorization', 'Bearer ' . $this->token_id);
         $guard = $this->createGuard($request, $usersProvider);
-        $this->assertTrue($guard->check(), 'Auth success by Bearer token header');
-        $this->assertInstanceOf(User::class, $guard->user(), 'Got valid user object');
+        static::assertTrue($guard->check(), 'Auth success by Bearer token header');
+        static::assertInstanceOf(User::class, $guard->user(), 'Got valid user object');
     }
 
     public function testSuccessAuthByPhpAuthHeader()
@@ -50,8 +50,8 @@ class TokenGuardTest extends TestCase
         $request = new Request();
         $request->headers->set('PHP_AUTH_PW', $this->token_id);
         $guard = $this->createGuard($request, $usersProvider);
-        $this->assertTrue($guard->check(), 'Auth success by Bearer token header');
-        $this->assertInstanceOf(User::class, $guard->user(), 'Got valid user object');
+        static::assertTrue($guard->check(), 'Auth success by Bearer token header');
+        static::assertInstanceOf(User::class, $guard->user(), 'Got valid user object');
     }
 
     public function testAuthFailOnInvalidCredentials()
@@ -69,10 +69,10 @@ class TokenGuardTest extends TestCase
         $guardPost = $this->createGuard($requestPost, $usersProvider);
         $guardBearer = $this->createGuard($requestBearer, $usersProvider);
         $guardPhpAuth = $this->createGuard($requestPhpAuth, $usersProvider);
-        $this->assertFalse($guardGet->check(), 'Auth failed with invalid token in GET array');
-        $this->assertFalse($guardPost->check(), 'Auth failed with invalid token in POST array');
-        $this->assertFalse($guardBearer->check(), 'Auth failed with invalid token in Bearer header');
-        $this->assertFalse($guardPhpAuth->check(), 'Auth failed with invalid token in PHP_AUTH_PW header');
+        static::assertFalse($guardGet->check(), 'Auth failed with invalid token in GET array');
+        static::assertFalse($guardPost->check(), 'Auth failed with invalid token in POST array');
+        static::assertFalse($guardBearer->check(), 'Auth failed with invalid token in Bearer header');
+        static::assertFalse($guardPhpAuth->check(), 'Auth failed with invalid token in PHP_AUTH_PW header');
     }
 
     public function testCheckAuthUserStatusFunctions()
@@ -80,9 +80,9 @@ class TokenGuardTest extends TestCase
         [$usersProvider, $user, $storage] = $this->getAuthObjects();
         $request = new Request(['api_token' => $this->token_id]);
         $guard = $this->createGuard($request, $usersProvider);
-        $this->assertTrue($guard->check(), 'User is authorized');
-        $this->assertFalse($guard->guest(), 'User is not a guest');
-        $this->assertEquals($guard->id(), $this->token_user_id, 'User ID is correct');
+        static::assertTrue($guard->check(), 'User is authorized');
+        static::assertFalse($guard->guest(), 'User is not a guest');
+        static::assertEquals($guard->id(), $this->token_user_id, 'User ID is correct');
     }
 
     public function testReturnValidUserObject()
@@ -90,9 +90,9 @@ class TokenGuardTest extends TestCase
         [$usersProvider, $user, $storage] = $this->getAuthObjects();
         $request = new Request(['api_token' => $this->token_id]);
         $guard = $this->createGuard($request, $usersProvider);
-        $this->assertInstanceOf(User::class, $guard->user(), 'Returned valid user class');
-        $this->assertInstanceOf(User::class, $guard->authenticate(), 'Returned valid user class by ::authenticate() method');
-        $this->assertTrue($guard->hasUser(), 'Has user object');
+        static::assertInstanceOf(User::class, $guard->user(), 'Returned valid user class');
+        static::assertInstanceOf(User::class, $guard->authenticate(), 'Returned valid user class by ::authenticate() method');
+        static::assertTrue($guard->hasUser(), 'Has user object');
     }
 
     /**
@@ -115,9 +115,9 @@ class TokenGuardTest extends TestCase
         $request = new Request(['api_token' => $this->token_id]);
         $requestNew = new Request(['api_token' => $falseTokenStr]);
         $guard = $this->createGuard($request, $usersProvider);
-        $this->assertTrue($guard->check(), 'User is authorized');
+        static::assertTrue($guard->check(), 'User is authorized');
         $guard->setRequest($requestNew);
-        $this->assertFalse($guard->check(), 'User is not authorized');
+        static::assertFalse($guard->check(), 'User is not authorized');
     }
 
     public function testPrimitiveValidation()
@@ -129,8 +129,8 @@ class TokenGuardTest extends TestCase
         //password will be skipped
         $userData = ['email' => $this->token_user_email, 'password' => $this->token_user_password];
         $userDataFake = ['email' => 'fake@example.com', 'password' => $this->token_user_password];
-        $this->assertTrue($guard->validate($userData), 'User credentials are valid');
-        $this->assertFalse($guard->validate($userDataFake), 'User credentials are not valid');
+        static::assertTrue($guard->validate($userData), 'User credentials are valid');
+        static::assertFalse($guard->validate($userDataFake), 'User credentials are not valid');
     }
 
     public function testSetNewTokenToGuard()
@@ -140,11 +140,11 @@ class TokenGuardTest extends TestCase
         $request = new Request(['api_token' => $this->token_id]);
         $requestNew = new Request(['api_token' => $newToken->token]);
         $guard = $this->createGuard($request, $usersProvider);
-        $this->assertTrue($guard->check(), 'User is authorized with old token');
+        static::assertTrue($guard->check(), 'User is authorized with old token');
         $guard->setRequest($requestNew);
-        $this->assertFalse($guard->check(), 'User is not authorized with new token');
+        static::assertFalse($guard->check(), 'User is not authorized with new token');
         $guard->setToken($newToken);
-        $this->assertTrue($guard->check(), 'User is authorized with new token');
+        static::assertTrue($guard->check(), 'User is authorized with new token');
     }
 
 

@@ -26,8 +26,8 @@ class HasTokensTraitTest extends TestCase
         $user = $this->createUser();
         $tokensEmpty = $user->getTokens();
         $tokensNotEmpty = $user->getTokens();
-        $this->assertEmpty($tokensEmpty, 'No tokens found for user');
-        $this->assertNotEmpty($tokensNotEmpty, 'Tokens found for user');
+        static::assertEmpty($tokensEmpty, 'No tokens found for user');
+        static::assertNotEmpty($tokensNotEmpty, 'Tokens found for user');
     }
 
     public function testGetUserTokenForClient()
@@ -41,8 +41,8 @@ class HasTokensTraitTest extends TestCase
         $tokenFound = $user->getToken($this->token_client_id);
         // Assume that $this->token_client_id is DEFAULT CLIENT ID
         $tokenFoundFromRequest = $user->getToken();
-        $this->assertInstanceOf(AccessTokenContract::class, $tokenFound, 'Found token for user');
-        $this->assertInstanceOf(AccessTokenContract::class, $tokenFoundFromRequest, 'Found token for user from request');
+        static::assertInstanceOf(AccessTokenContract::class, $tokenFound, 'Found token for user');
+        static::assertInstanceOf(AccessTokenContract::class, $tokenFoundFromRequest, 'Found token for user from request');
     }
 
     public function testCreateUserToken()
@@ -51,7 +51,7 @@ class HasTokensTraitTest extends TestCase
         $this->bindStorage(function () use ($storage) { return $storage; });
         $user = $this->createUser();
         $tokenCreated = $user->createToken($this->token_client_id, 99);
-        $this->assertInstanceOf(AccessTokenContract::class, $tokenCreated, 'Token class created token for user');
+        static::assertInstanceOf(AccessTokenContract::class, $tokenCreated, 'Token class created token for user');
     }
 
     /**

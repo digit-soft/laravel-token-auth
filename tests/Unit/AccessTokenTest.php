@@ -27,10 +27,10 @@ class AccessTokenTest extends TestCase
             'client_id' => $this->token_client_id,
         ];
         $token = TokenCached::createFromData($data);
-        $this->assertEquals($data['token'], $token->token, 'Token ID is equal');
-        $this->assertEquals($data['user_id'], $token->user_id, 'User ID is equal');
-        $this->assertEquals($data['ttl'], $token->ttl, 'Time to live is equal');
-        $this->assertEquals($data['client_id'], $token->client_id, 'Client ID is equal');
+        static::assertEquals($data['token'], $token->token, 'Token ID is equal');
+        static::assertEquals($data['user_id'], $token->user_id, 'User ID is equal');
+        static::assertEquals($data['ttl'], $token->ttl, 'Time to live is equal');
+        static::assertEquals($data['client_id'], $token->client_id, 'Client ID is equal');
     }
 
     public function testCreateForUser()
@@ -38,39 +38,39 @@ class AccessTokenTest extends TestCase
         $user = $this->createUser();
         $this->bindStorage(function () { return $this->createStorageMock(); });
         $token = TokenCached::createFor($user);
-        $this->assertEquals($user->getAuthIdentifier(), $token->user_id, 'User ID is equal');
-        $this->assertNotEmpty($token->token, 'Token ID is not empty');
+        static::assertEquals($user->getAuthIdentifier(), $token->user_id, 'User ID is equal');
+        static::assertNotEmpty($token->token, 'Token ID is not empty');
     }
 
     public function testSetDifferentTimeToLive()
     {
         $user = $this->createUser();
         $token = TokenCached::createFor($user, $this->token_client_id, false);
-        $this->assertNull($token->ttl, 'Time to live is NULL');
-        $this->assertNull($token->iat, 'Issued at time is NULL');
-        $this->assertNull($token->exp, 'Expire time is NULL');
-        $this->assertFalse($token->isExpired(), 'Token is not expired');
+        static::assertNull($token->ttl, 'Time to live is NULL');
+        static::assertNull($token->iat, 'Issued at time is NULL');
+        static::assertNull($token->exp, 'Expire time is NULL');
+        static::assertFalse($token->isExpired(), 'Token is not expired');
         $token->setTtl($this->token_ttl);
         $exp = $token->iat + $token->ttl;
-        $this->assertEquals($this->token_ttl, $token->ttl, 'TTL is equal');
-        $this->assertNotNull($token->iat, 'Issued time is NOT NULL');
-        $this->assertNotNull($token->exp, 'Expire time is NOT NULL');
-        $this->assertEquals($exp, $token->exp, 'Expire time is equal');
+        static::assertEquals($this->token_ttl, $token->ttl, 'TTL is equal');
+        static::assertNotNull($token->iat, 'Issued time is NOT NULL');
+        static::assertNotNull($token->exp, 'Expire time is NOT NULL');
+        static::assertEquals($exp, $token->exp, 'Expire time is equal');
         $token->setTtl(-1, true);
-        $this->assertTrue($token->isExpired(), 'Token is expired');
+        static::assertTrue($token->isExpired(), 'Token is expired');
     }
 
     public function testDumpToArray()
     {
         $token = $this->createToken();
         $tokenArray = $token->toArray();
-        $this->assertIsArray($tokenArray, 'Dump is an array');
-        $this->assertArrayHasKey('token', $tokenArray, 'Dump has key token');
-        $this->assertArrayHasKey('user_id', $tokenArray, 'Dump has key user_id');
-        $this->assertArrayHasKey('client_id', $tokenArray, 'Dump has key client_id');
-        $this->assertEquals($token->token, $tokenArray['token'], 'Token ID is equal');
-        $this->assertEquals($token->user_id, $tokenArray['user_id'], 'User ID is equal');
-        $this->assertEquals($token->client_id, $tokenArray['client_id'], 'Client ID is equal');
+        static::assertIsArray($tokenArray, 'Dump is an array');
+        static::assertArrayHasKey('token', $tokenArray, 'Dump has key token');
+        static::assertArrayHasKey('user_id', $tokenArray, 'Dump has key user_id');
+        static::assertArrayHasKey('client_id', $tokenArray, 'Dump has key client_id');
+        static::assertEquals($token->token, $tokenArray['token'], 'Token ID is equal');
+        static::assertEquals($token->user_id, $tokenArray['user_id'], 'User ID is equal');
+        static::assertEquals($token->client_id, $tokenArray['client_id'], 'Client ID is equal');
     }
 
     public function testDumpToJson()
@@ -78,8 +78,8 @@ class AccessTokenTest extends TestCase
         $token = $this->createToken();
         $tokenJson = $token->toJson();
         $tokenArray = json_decode($tokenJson, true);
-        $this->assertIsString($tokenJson, 'JSON is string');
-        $this->assertIsArray($tokenArray, 'JSON is valid');
+        static::assertIsString($tokenJson, 'JSON is string');
+        static::assertIsArray($tokenArray, 'JSON is valid');
     }
 
     public function testDumpToString()
@@ -87,18 +87,18 @@ class AccessTokenTest extends TestCase
         $token = $this->createToken();
         $tokenStr1 = $token->__toString();
         $tokenStr2 = (string)$token;
-        $this->assertIsString($tokenStr1, 'Token ID is string');
-        $this->assertEquals($token->token, $tokenStr1, 'Token IDs are equal');
-        $this->assertEquals($tokenStr1, $tokenStr2, 'Strings are equal');
+        static::assertIsString($tokenStr1, 'Token ID is string');
+        static::assertEquals($token->token, $tokenStr1, 'Token IDs are equal');
+        static::assertEquals($tokenStr1, $tokenStr2, 'Strings are equal');
     }
 
     // public function testSettingStorageToTokenObject()
     // {
     //     $token = $this->createToken();
     //     $newStorage = $this->createStorageMock();
-    //     $this->assertNotSame($newStorage, $token->getStorage(), 'Storages are not equal');
+    //     static::assertNotSame($newStorage, $token->getStorage(), 'Storages are not equal');
     //     $token->setStorage($newStorage);
-    //     $this->assertSame($newStorage, $token->getStorage(), 'Storages are equal');
+    //     static::assertSame($newStorage, $token->getStorage(), 'Storages are equal');
     // }
 
     public function testSaveTokenToStorage()
@@ -112,8 +112,8 @@ class AccessTokenTest extends TestCase
         $token->iat = null;
         $token->save();
         $tokenRead = $storage->getToken($token->token);
-        $this->assertInstanceOf(AccessTokenContract::class, $tokenRead, 'Token found');
-        $this->assertEquals($tokenRead->token, $token->token, 'Found equal token');
+        static::assertInstanceOf(AccessTokenContract::class, $tokenRead, 'Token found');
+        static::assertEquals($tokenRead->token, $token->token, 'Found equal token');
     }
 
     public function testRegenerateToken()
@@ -129,9 +129,9 @@ class AccessTokenTest extends TestCase
         //$token->save();
         $this->configureStorageMockForTokenGet($storage, $token);
         $tokenRead = $storage->getToken($token->token);
-        $this->assertInstanceOf(AccessTokenContract::class, $tokenRead, 'Token found');
-        $this->assertEquals($tokenRead->token, $token->token, 'Found equal token');
-        $this->assertNotEquals($oldToken, $newToken, 'Regenerated token is different');
+        static::assertInstanceOf(AccessTokenContract::class, $tokenRead, 'Token found');
+        static::assertEquals($tokenRead->token, $token->token, 'Found equal token');
+        static::assertNotEquals($oldToken, $newToken, 'Regenerated token is different');
     }
 
     public function testGetClientIdFromRequest()
@@ -145,11 +145,11 @@ class AccessTokenTest extends TestCase
         $requestHeader = new Request();
         $requestHeader->headers->set(AccessTokenContract::REQUEST_CLIENT_ID_HEADER, $clientId);
         $requestEmpty = new Request();
-        $this->assertEquals($clientId, TokenCached::getClientIdFromRequest($requestGet), 'Get client id from GET params');
-        $this->assertEquals($clientId, TokenCached::getClientIdFromRequest($requestPost), 'Get client id from POST params');
-        $this->assertEquals($clientId, TokenCached::getClientIdFromRequest($requestHeader), 'Get client id from headers');
-        $this->assertEquals(TokenCached::getDefaultClientId(), TokenCached::getClientIdFromRequest($requestEmpty), 'Get client id from empty request');
-        $this->assertNotEquals($clientIdFake, TokenCached::getClientIdFromRequest($requestGet));
+        static::assertEquals($clientId, TokenCached::getClientIdFromRequest($requestGet), 'Get client id from GET params');
+        static::assertEquals($clientId, TokenCached::getClientIdFromRequest($requestPost), 'Get client id from POST params');
+        static::assertEquals($clientId, TokenCached::getClientIdFromRequest($requestHeader), 'Get client id from headers');
+        static::assertEquals(TokenCached::getDefaultClientId(), TokenCached::getClientIdFromRequest($requestEmpty), 'Get client id from empty request');
+        static::assertNotEquals($clientIdFake, TokenCached::getClientIdFromRequest($requestGet));
     }
 
     public function testGuestTokenGeneration()
@@ -157,10 +157,10 @@ class AccessTokenTest extends TestCase
         $user = $this->createUser();
         $tokenUser = TokenCached::createFor($user);
         $tokenGuest = TokenCached::createForGuest();
-        $this->assertFalse($tokenUser->isGuest(), 'Token for user is checking correct');
-        $this->assertTrue($tokenGuest->isGuest(), 'Token for guest is checking correct');
-        $this->assertNotEmpty($tokenGuest->token, 'Token for guest is not empty');
-        $this->assertNotNull($tokenGuest->ttl, 'Token for guest has not empty TTL');
+        static::assertFalse($tokenUser->isGuest(), 'Token for user is checking correct');
+        static::assertTrue($tokenGuest->isGuest(), 'Token for guest is checking correct');
+        static::assertNotEmpty($tokenGuest->token, 'Token for guest is not empty');
+        static::assertNotNull($tokenGuest->ttl, 'Token for guest has not empty TTL');
     }
 
     public function testGetFirstUserTokenAfterSave()
@@ -178,27 +178,27 @@ class AccessTokenTest extends TestCase
         $tokenRead = TokenCached::getFirstFor($user);
         $tokenReadEmpty = TokenCached::getFirstFor($user, $this->token_client_id . '2');
         $tokenReadEmpty2 = TokenCached::getFirstFor($user2, $this->token_client_id);
-        $this->assertInstanceOf(AccessTokenContract::class, $tokenRead, 'Token found');
-        $this->assertEquals($tokenRead->token, $token->token, 'Found equal token');
-        $this->assertNull($tokenReadEmpty, 'Token for non existing client not found');
-        $this->assertNull($tokenReadEmpty2, 'Token for non existing user not found');
+        static::assertInstanceOf(AccessTokenContract::class, $tokenRead, 'Token found');
+        static::assertEquals($tokenRead->token, $token->token, 'Found equal token');
+        static::assertNull($tokenReadEmpty, 'Token for non existing client not found');
+        static::assertNull($tokenReadEmpty2, 'Token for non existing user not found');
     }
 
     public function testUpdateTokenPropertiesAndCheckState()
     {
         $token = $this->createToken(30, null, null, null, true);
         $tokenNoState = $this->createToken(30, TokenCached::generateTokenStr());
-        $this->assertFalse($token->isChanged(), 'Token was not changed');
+        static::assertFalse($token->isChanged(), 'Token was not changed');
         $oldTokenId = $token->token;
         $token->regenerate();
-        $this->assertTrue($token->isChanged(), 'Token was changed');
-        $this->assertNotEquals($oldTokenId, $token->token, 'Token ID was changed');
+        static::assertTrue($token->isChanged(), 'Token was changed');
+        static::assertNotEquals($oldTokenId, $token->token, 'Token ID was changed');
         $token->restoreState();
-        $this->assertEquals($oldTokenId, $token->token, 'Token ID was restored');
-        $this->assertTrue($tokenNoState->isChanged(), 'Token has changes because it has no state');
+        static::assertEquals($oldTokenId, $token->token, 'Token ID was restored');
+        static::assertTrue($tokenNoState->isChanged(), 'Token has changes because it has no state');
         $tokenNoStateData = $tokenNoState->toArray(true);
         $tokenNoState->restoreState();
-        $this->assertEquals($tokenNoState->toArray(true), $tokenNoStateData, 'Token has empty state so cant be restored');
+        static::assertEquals($tokenNoState->toArray(true), $tokenNoStateData, 'Token has empty state so cant be restored');
     }
 
     public function testRemoveTokenFromStorage()
