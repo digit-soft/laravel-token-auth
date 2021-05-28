@@ -1,4 +1,4 @@
-# Token auth for Laravel 5.6+
+# Token auth for Laravel 7+
 
 _Component uses Redis to store token information_
 
