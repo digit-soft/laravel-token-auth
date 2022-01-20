@@ -28,56 +28,64 @@ interface AccessToken extends Jsonable, Arrayable
 
     /**
      * Set time to live for token
-     * @param int  $ttl
-     * @param bool $overwriteTimestamps
+     *
+     * @param  int  $ttl
+     * @param  bool $overwriteTimestamps
      */
-    public function setTtl($ttl = 60, $overwriteTimestamps = true);
+    public function setTtl(int $ttl = 60, bool $overwriteTimestamps = true);
 
     /**
      * Check that token was expired
+     *
      * @return bool
      */
-    public function isExpired();
+    public function isExpired(): bool;
 
     /**
      * Check that this is guest token
+     *
      * @return bool
      */
-    public function isGuest();
+    public function isGuest(): bool;
 
     /**
      * Get fresh instance of token.
      *
      * @return \DigitSoft\LaravelTokenAuth\Contracts\AccessToken|null
      */
-    public function fresh();
+    public function fresh(): ?static;
 
     /**
      * Save token to storage
+     *
      * @return bool
      */
-    public function save();
+    public function save(): bool;
 
     /**
      * Get saved flag
+     *
      * @return bool
      */
-    public function saved();
+    public function wasSaved(): bool;
 
     /**
      * Remove token from storage
+     *
      * @return bool
      */
-    public function remove();
+    public function remove(): bool;
 
     /**
      * Regenerate token
-     * @param bool $save
+     *
+     * @param  bool $save
      */
-    public function regenerate($save = false);
+    public function regenerate(bool $save = false): bool;
 
     /**
      * Force token unique check and ID regeneration
+     *
      * @return $this
      */
     public function ensureUniqueness();
@@ -89,7 +97,7 @@ interface AccessToken extends Jsonable, Arrayable
      * @param bool $withGuarded  Include guarded properties
      * @return string
      */
-    public function toJson($options = 0, $withGuarded = false);
+    public function toJson($options = 0, bool $withGuarded = false);
 
     /**
      * Get the instance as an array.
@@ -97,5 +105,5 @@ interface AccessToken extends Jsonable, Arrayable
      * @param bool $withGuarded  Include guarded properties
      * @return array
      */
-    public function toArray($withGuarded = false);
+    public function toArray(bool $withGuarded = false): array;
 }

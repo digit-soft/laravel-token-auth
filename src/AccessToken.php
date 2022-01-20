@@ -11,13 +11,12 @@ use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 /**
  * Class AccessToken
  *
- * @package DigitSoft\LaravelTokenAuth
- * @OA\Property("user_id",example=1,description="User ID")
- * @OA\Property("token",type="string",description="Token string")
- * @OA\Property("iat",type="integer",example=19200000,description="Issued at time")
- * @OA\Property("ttl",type="integer",example=8600,description="Time to live")
- * @OA\Property("exp",type="integer",example=19200000,description="Expire time")
- * @OA\Property("client_id",type="string",example="api",description="Client ID")
+ * @OA\Property("user_id", example=1, description="User ID")
+ * @OA\Property("token", type="string", description="Token string")
+ * @OA\Property("iat", type="integer", example=19200000, description="Issued at time")
+ * @OA\Property("ttl", type="integer", example=8600, description="Time to live")
+ * @OA\Property("exp", type="integer", example=19200000, description="Expire time")
+ * @OA\Property("client_id", type="string", example="api", description="Client ID")
  */
 class AccessToken implements AccessTokenContract
 {
@@ -92,7 +91,7 @@ class AccessToken implements AccessTokenContract
      * @param  array   $config
      * @param  bool    $fromStorage
      */
-    public function __construct($config = [], $fromStorage = false)
+    public function __construct(array $config = [], bool $fromStorage = false)
     {
         $this->client_id = Facades\TokenCached::getDefaultClientId();
         $this->session = serialize([]);
@@ -109,7 +108,7 @@ class AccessToken implements AccessTokenContract
      * @param  int  $ttl
      * @param  bool $overwriteTimestamps
      */
-    public function setTtl($ttl = 60, $overwriteTimestamps = true)
+    public function setTtl(int $ttl = 60, bool $overwriteTimestamps = true)
     {
         $this->ttl = $ttl;
         if ($overwriteTimestamps) {
@@ -123,7 +122,7 @@ class AccessToken implements AccessTokenContract
      *
      * @return bool
      */
-    public function isExpired()
+    public function isExpired(): bool
     {
         return isset($this->ttl, $this->exp) && $this->exp < now()->timestamp;
     }
@@ -133,7 +132,7 @@ class AccessToken implements AccessTokenContract
      *
      * @return bool
      */
-    public function isGuest()
+    public function isGuest(): bool
     {
         return empty($this->user_id);
     }
@@ -143,7 +142,7 @@ class AccessToken implements AccessTokenContract
      *
      * @return \DigitSoft\LaravelTokenAuth\Contracts\AccessToken|null
      */
-    public function fresh()
+    public function fresh(): ?static
     {
         if ($this->token === null) {
             return null;
@@ -157,7 +156,7 @@ class AccessToken implements AccessTokenContract
      *
      * @return bool
      */
-    public function save()
+    public function save(): bool
     {
         if (! isset($this->iat)) {
             $this->iat = now()->timestamp;
@@ -175,7 +174,7 @@ class AccessToken implements AccessTokenContract
      *
      * @return bool
      */
-    public function saved()
+    public function wasSaved(): bool
     {
         return $this->saved;
     }
@@ -185,7 +184,7 @@ class AccessToken implements AccessTokenContract
      *
      * @return bool
      */
-    public function remove()
+    public function remove(): bool
     {
         return static::tokenStorage()->removeToken($this);
     }
@@ -195,7 +194,7 @@ class AccessToken implements AccessTokenContract
      *
      * @param  bool $save
      */
-    public function regenerate($save = false)
+    public function regenerate(bool $save = false): bool
     {
         if ($save) {
             $this->remove();
@@ -223,7 +222,7 @@ class AccessToken implements AccessTokenContract
     /**
      * @inheritdoc
      */
-    public function toArray($withGuarded = false)
+    public function toArray(bool $withGuarded = false): array
     {
         try {
             $reflection = $this->getRef();
@@ -275,7 +274,7 @@ class AccessToken implements AccessTokenContract
      *
      * @param  array $config
      */
-    protected function configureSelf($config = [])
+    protected function configureSelf(array $config = [])
     {
         foreach ($config as $key => $value) {
             if (property_exists($this, $key)) {

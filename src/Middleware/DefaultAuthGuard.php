@@ -6,21 +6,23 @@ use Illuminate\Auth\AuthManager;
 
 /**
  * Class DefaultAuthGuard.
+ *
  * Middleware that sets default auth guard driver on each request.
  * Feature is useful for applications, those work on top of React PHP (PHP PM)
- * @package DigitSoft\LaravelTokenAuth\Middleware
+ *
  * @codeCoverageIgnore
  */
 class DefaultAuthGuard
 {
     /**
-     * @var AuthManager
+     * @var \Illuminate\Auth\AuthManager
      */
     protected $manager;
 
     /**
      * DefaultAuthGuard constructor.
-     * @param AuthManager $manager
+     *
+     * @param  \Illuminate\Auth\AuthManager $manager
      */
     public function __construct(AuthManager $manager)
     {
@@ -30,12 +32,12 @@ class DefaultAuthGuard
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
-     * @param  string|null  $guard
+     * @param  \Illuminate\Http\Request $request
+     * @param  \Closure                 $next
+     * @param  string|null              $guard
      * @return mixed
      */
-    public function handle($request, \Closure $next, $guard = 'web')
+    public function handle($request, \Closure $next, ?string $guard = 'web')
     {
         if ($guard !== $this->manager->getDefaultDriver()) {
             $this->manager->shouldUse($guard);

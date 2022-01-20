@@ -6,12 +6,14 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use DigitSoft\LaravelTokenAuth\Contracts\TokenGuard;
+use DigitSoft\LaravelTokenAuth\Contracts\AccessToken;
 
 /**
  * Class AddGeneratedTokenToResponse.
+ *
  * This middleware adds token id to specified header if token was generated during request.
  * E.g. guest token for session data or other cases.
- * @package App\Http\Middleware
+ *
  * @codeCoverageIgnore
  */
 class AddGeneratedTokenToResponse
@@ -38,17 +40,17 @@ class AddGeneratedTokenToResponse
     /**
      * Get token, that was generated for request.
      * This function is getting token from auth guard and (if last exists) compares it with token given by user in request.
-     * If this tokens are not equals then returns new one (generated during request).
+     * If these tokens are not equals then returns new one (generated during request).
      *
      * @return \DigitSoft\LaravelTokenAuth\Contracts\AccessToken|null
      */
-    protected function getTokenGenerated()
+    protected function getTokenGenerated(): ?AccessToken
     {
         $guard = Auth::guard();
         if (! $guard instanceof TokenGuard || ($token = $guard->token()) === null) {
             return null;
         }
 
-        return $token->saved() && $token->token !== $guard->getTokenForRequest() ? $token : null;
+        return $token->wasSaved() && $token->token !== $guard->getTokenForRequest() ? $token : null;
     }
 }

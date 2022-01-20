@@ -6,21 +6,23 @@ use Illuminate\Session\SessionManager;
 
 /**
  * Class DefaultSessionDriver.
+ *
  * Middleware that sets default auth session driver on each request.
  * Feature is useful for applications, those work on top of React PHP (PHP PM)
- * @package DigitSoft\LaravelTokenAuth\Middleware
+ *
  * @codeCoverageIgnore
  */
 class DefaultSessionDriver
 {
     /**
-     * @var SessionManager
+     * @var \Illuminate\Session\SessionManager
      */
     protected $manager;
 
     /**
      * SetDefaultSessionDriver middleware constructor.
-     * @param SessionManager $manager
+     *
+     * @param \Illuminate\Session\SessionManager $manager
      */
     public function __construct(SessionManager $manager)
     {
@@ -32,10 +34,10 @@ class DefaultSessionDriver
      *
      * @param  \Illuminate\Http\Request $request
      * @param  \Closure                 $next
-     * @param string                    $driver
+     * @param  string                   $driver
      * @return mixed
      */
-    public function handle($request, \Closure $next, $driver = 'array')
+    public function handle($request, \Closure $next, string $driver = 'array')
     {
         if ($driver !== $this->manager->getDefaultDriver()) {
             $this->manager->setDefaultDriver($driver);

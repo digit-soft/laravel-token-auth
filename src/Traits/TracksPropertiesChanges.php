@@ -4,8 +4,6 @@ namespace DigitSoft\LaravelTokenAuth\Traits;
 
 /**
  * Trait TracksPropertiesChanges
- *
- * @package DigitSoft\LaravelTokenAuth\Traits
  */
 trait TracksPropertiesChanges
 {

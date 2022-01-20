@@ -2,17 +2,18 @@
 
 namespace DigitSoft\LaravelTokenAuth\Session;
 
-use DigitSoft\LaravelTokenAuth\Contracts\TokenGuard;
-use Illuminate\Config\Repository;
 use Illuminate\Support\Arr;
 use SessionHandlerInterface;
+use Illuminate\Config\Repository;
+use DigitSoft\LaravelTokenAuth\Traits\WithAuthGuardHelpersForSession;
 
 /**
  * Class TokenSessionHandler
- * @package DigitSoft\LaravelTokenAuth\Session
  */
 class TokenSessionHandler implements SessionHandlerInterface
 {
+    use WithAuthGuardHelpersForSession;
+
     /**
      * App config repository
      * @var Repository
@@ -45,14 +46,14 @@ class TokenSessionHandler implements SessionHandlerInterface
     /**
      * Destroy a session
      * @link http://php.net/manual/en/sessionhandlerinterface.destroy.php
-     * @param string $session_id The session ID being destroyed.
+     * @param string $id The session ID being destroyed.
      * @return bool <p>
      * The return value (usually TRUE on success, FALSE on failure).
      * Note this value is returned internally to PHP for processing.
      * </p>
      * @since 5.4.0
      */
-    public function destroy($session_id)
+    public function destroy($id)
     {
         return $this->saveSessionData(null);
     }
@@ -60,7 +61,7 @@ class TokenSessionHandler implements SessionHandlerInterface
     /**
      * Cleanup old sessions
      * @link http://php.net/manual/en/sessionhandlerinterface.gc.php
-     * @param int $maxlifetime <p>
+     * @param int $max_lifetime <p>
      * Sessions that have not updated for
      * the last maxlifetime seconds will be removed.
      * </p>
@@ -70,7 +71,7 @@ class TokenSessionHandler implements SessionHandlerInterface
      * </p>
      * @since 5.4.0
      */
-    public function gc($maxlifetime)
+    public function gc($max_lifetime)
     {
         return true;
     }
@@ -78,7 +79,7 @@ class TokenSessionHandler implements SessionHandlerInterface
     /**
      * Initialize session
      * @link http://php.net/manual/en/sessionhandlerinterface.open.php
-     * @param string $save_path The path where to store/retrieve the session.
+     * @param string $path The path where to store/retrieve the session.
      * @param string $name The session name.
      * @return bool <p>
      * The return value (usually TRUE on success, FALSE on failure).
@@ -86,7 +87,7 @@ class TokenSessionHandler implements SessionHandlerInterface
      * </p>
      * @since 5.4.0
      */
-    public function open($save_path, $name)
+    public function open($path, $name)
     {
         return true;
     }
@@ -94,7 +95,7 @@ class TokenSessionHandler implements SessionHandlerInterface
     /**
      * Read session data
      * @link http://php.net/manual/en/sessionhandlerinterface.read.php
-     * @param string $session_id The session id to read data for.
+     * @param string $id The session id to read data for.
      * @return string <p>
      * Returns an encoded string of the read data.
      * If nothing was read, it must return an empty string.
@@ -102,20 +103,21 @@ class TokenSessionHandler implements SessionHandlerInterface
      * </p>
      * @since 5.4.0
      */
-    public function read($session_id)
+    public function read($id)
     {
         $token = $this->getToken();
         if ($token !== null) {
             return $token->session;
         }
+
         return '';
     }
 
     /**
      * Write session data
      * @link http://php.net/manual/en/sessionhandlerinterface.write.php
-     * @param string $session_id The session id.
-     * @param string $session_data <p>
+     * @param string $id The session id.
+     * @param string $data <p>
      * The encoded session data. This data is the
      * result of the PHP internally encoding
      * the $_SESSION superglobal to a serialized
@@ -128,24 +130,27 @@ class TokenSessionHandler implements SessionHandlerInterface
      * </p>
      * @since 5.4.0
      */
-    public function write($session_id, $session_data)
+    public function write($id, $data)
     {
-        $session_data = $this->cleanupSessionData($session_data);
-        return $this->saveSessionData($session_data);
+        return $this->saveSessionData(
+            $this->cleanupSessionData($data)
+        );
     }
 
     /**
      * Save session data
-     * @param string $session_data
+     *
+     * @param  string|null $data
      * @return bool
      */
-    protected function saveSessionData($session_data)
+    protected function saveSessionData($data)
     {
         $token = $this->getToken();
-        if ($token !== null && $token->session !== $session_data) {
-            $token->session = $session_data !== '' ? $session_data : null;
+        if ($token !== null && $token->session !== $data) {
+            $token->session = $data !== '' ? $data : null;
             $token->save();
         }
+
         return true;
     }
 
@@ -153,54 +158,34 @@ class TokenSessionHandler implements SessionHandlerInterface
      * Remove some data from session array.
      * We do not need to save such session data as '_previous', '_token', '_flash',
      * only variables that were obviously set by user to prevent token rewrite each time.
-     * @param string $session_data
+     *
+     * @param  string $data
      * @return string
      */
-    protected function cleanupSessionData($session_data)
+    protected function cleanupSessionData($data)
     {
         $remove = ['_previous', '_token', '_flash', 'PHPDEBUGBAR_STACK_DATA'];
-        if ($session_data === null || $session_data === '') {
-            return $session_data;
+        if ($data === null || $data === '') {
+            return $data;
         }
         // We will use serialize/unserialize because of laravel use it internally to handle session data
         // instead of standard PHP session_encode()/session_decode()
-        $session = @unserialize($session_data);
-        if (null === $session) {
+        $session = @unserialize($data);
+        if ($session === null) {
             return serialize([]);
         }
         foreach ($remove as $key) {
             Arr::forget($session, $key);
         }
-        $session_data = serialize($session);
-        return $session_data;
+
+        return serialize($session);
     }
 
     /**
-     * Get current token to save data
-     * @return \DigitSoft\LaravelTokenAuth\Contracts\AccessToken|null
+     * {@inheritdoc}
      */
-    protected function getToken()
+    protected function shouldCreateGuestTokenWhenMissing(): bool
     {
-        $guard = \Auth::guard();
-        if (!$guard instanceof TokenGuard || ($token = $this->getTokenOrCreate($guard)) === null) {
-            return null;
-        }
-        return $token;
-    }
-
-    /**
-     * Get user token or create new for guest
-     * @param TokenGuard $guard
-     * @return \DigitSoft\LaravelTokenAuth\Contracts\AccessToken|null
-     */
-    protected function getTokenOrCreate(TokenGuard $guard)
-    {
-        $autoCreate = $this->config->get('auth-token.session_token_autocreate', false);
-        $token = $guard->token();
-        if ($autoCreate && $token === null) {
-            $token = \TokenCached::createForGuest();
-            $guard->setToken($token);
-        }
-        return $token;
+        return $this->config->get('auth-token.session_token_autocreate', false);
     }
 }

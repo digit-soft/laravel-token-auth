@@ -6,7 +6,6 @@ use DigitSoft\LaravelTokenAuth\Contracts\AccessToken;
 
 /**
  * Trait StorageHelpers
- * @package DigitSoft\LaravelTokenAuth\Storage
  */
 trait StorageHelpers
 {
@@ -21,7 +20,8 @@ trait StorageHelpers
 
     /**
      * Get token storage key
-     * @param \DigitSoft\LaravelTokenAuth\Contracts\AccessToken|string $token
+     *
+     * @param  \DigitSoft\LaravelTokenAuth\Contracts\AccessToken|string $token
      * @return string
      */
     protected function getTokenKey($token)
@@ -31,7 +31,8 @@ trait StorageHelpers
 
     /**
      * Get token storage keys (multiple)
-     * @param \DigitSoft\LaravelTokenAuth\Contracts\AccessToken[]|string[] $tokens
+     *
+     * @param  \DigitSoft\LaravelTokenAuth\Contracts\AccessToken[]|string[] $tokens
      * @return string[]
      */
     protected function getTokenKeys($tokens)
@@ -41,12 +42,14 @@ trait StorageHelpers
         foreach ($tokens as $token) {
             $keys[$token] = $prefix . (string)$token;
         }
+
         return $keys;
     }
 
     /**
      * Get user storage key
-     * @param int $userId
+     *
+     * @param  int $userId
      * @return string
      */
     protected function getUserKey($userId)
@@ -56,8 +59,9 @@ trait StorageHelpers
 
     /**
      * Get user storage for particular token key
-     * @param int                                                      $user_id
-     * @param \DigitSoft\LaravelTokenAuth\Contracts\AccessToken|string $token
+     *
+     * @param  int                                                      $user_id
+     * @param  \DigitSoft\LaravelTokenAuth\Contracts\AccessToken|string $token
      * @return string
      */
     protected function getUserTokenKey($token, $user_id = null)
@@ -101,7 +105,7 @@ trait StorageHelpers
      * @param  array $data
      * @return string
      */
-    protected function serializeData($data = [])
+    protected function serializeData(array $data = [])
     {
         return json_encode($data);
     }

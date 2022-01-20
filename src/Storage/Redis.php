@@ -10,7 +10,6 @@ use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 
 /**
  * Redis storage component.
- * @package DigitSoft\LaravelTokenAuth\Storage
  */
 class Redis implements Storage
 {
@@ -48,9 +47,9 @@ class Redis implements Storage
     }
 
     /**
-     * Get manager connection
+     * Get manager connection.
      *
-     * @return \Illuminate\Redis\Connections\Connection
+     * @return \Illuminate\Redis\Connections\Connection|\Illuminate\Redis\Connections\PredisConnection
      */
     public function getConnection()
     {
@@ -64,7 +63,7 @@ class Redis implements Storage
      * @param  bool $load
      * @return AccessTokenContract[]
      */
-    public function getUserTokens($user_id, $load = false)
+    public function getUserTokens($user_id, bool $load = false): array
     {
         $userKey = $this->getUserKey($user_id);
         $tokens = $this->getConnection()->keys($userKey . ':*');
@@ -98,11 +97,11 @@ class Redis implements Storage
      * @param  int                   $user_id
      * @param  AccessTokenContract[] $tokens
      */
-    public function setUserTokens($user_id, $tokens = [])
+    public function setUserTokens($user_id, array $tokens = [])
     {
         $existingKeys = $this->getUserTokenStorageKeys($user_id);
         // Remove old [user => token] keys
-        if (!empty($existingKeys)) {
+        if (! empty($existingKeys)) {
             $this->getConnection()->del($existingKeys);
         }
         if (empty($tokens)) {
@@ -133,7 +132,7 @@ class Redis implements Storage
      * @param  string $tokenId
      * @return AccessTokenContract|null
      */
-    public function getToken($tokenId)
+    public function getToken($tokenId): ?AccessTokenContract
     {
         $key = $this->getTokenKey($tokenId);
         $dataStr = $this->getConnection()->get($key);
@@ -150,7 +149,7 @@ class Redis implements Storage
      * @param  string[] $tokenIds
      * @return AccessTokenContract[]
      */
-    public function getTokens($tokenIds)
+    public function getTokens($tokenIds): array
     {
         if (empty($tokenIds)) {
             return [];
@@ -175,7 +174,7 @@ class Redis implements Storage
      * @param  AccessTokenContract $token
      * @return bool
      */
-    public function setToken($token)
+    public function setToken($token): bool
     {
         $ttl = $this->getTokenRealTtl($token);
         if (isset($ttl) && $ttl <= 0) {
@@ -203,7 +202,7 @@ class Redis implements Storage
      * @param  AccessTokenContract $token
      * @return bool
      */
-    public function removeToken($token)
+    public function removeToken($token): bool
     {
         $tokenKey = $this->getTokenKey($token);
         $this->getConnection()->expire($tokenKey, 0);
@@ -218,7 +217,7 @@ class Redis implements Storage
      * @param  AccessTokenContract|string $token
      * @return bool
      */
-    public function tokenExists($token)
+    public function tokenExists($token): bool
     {
         $key = $this->getTokenKey($token);
         $exists = (int)$this->getConnection()->exists($key);
@@ -228,8 +227,9 @@ class Redis implements Storage
 
     /**
      * Add token to user list
-     * @param AccessTokenContract $token
-     * @param int|null            $ttl
+     *
+     * @param  AccessTokenContract $token
+     * @param  int|null            $ttl
      */
     protected function addUserToken($token, $ttl = null)
     {
@@ -262,7 +262,7 @@ class Redis implements Storage
      * @param  bool     $returnMissing
      * @return array
      */
-    protected function filterTokens($tokenIds, $returnMissing = false)
+    protected function filterTokens(array $tokenIds, bool $returnMissing = false)
     {
         $tokenKeys = $this->getTokenKeys($tokenIds);
         $records = $this->getConnection()->mget($tokenKeys);
@@ -270,10 +270,10 @@ class Redis implements Storage
         $existing = [];
         foreach ($tokenIds as $num => $data) {
             if (! isset($records[$num])) {
-                $missing[] = $tokenIds[$num];
+                $missing[] = $data;
                 continue;
             }
-            $existing[] = $tokenIds[$num];
+            $existing[] = $data;
         }
 
         return $returnMissing ? $missing : $existing;
@@ -298,10 +298,10 @@ class Redis implements Storage
      * @param  AccessTokenContract $token
      * @return int|null
      */
-    protected function getTokenRealTtl(AccessTokenContract $token)
+    protected function getTokenRealTtl(AccessTokenContract $token): ?int
     {
         $now = time();
-        if (!isset($token->ttl)) {
+        if (! isset($token->ttl)) {
             return null;
         }
         if (isset($token->exp)) {
@@ -310,6 +310,7 @@ class Redis implements Storage
             $token->exp = (int)($now + $token->ttl);
             $ttl = $token->ttl;
         }
+
         return $ttl > 0 ? $ttl : -1;
     }
 }

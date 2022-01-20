@@ -21,6 +21,7 @@ class SyncAlteredAccessToken
         $response = $next($request);
         $guard = Auth::guard();
         if ($guard instanceof TokenGuard && ($user = $guard->user()) instanceof AlteredByAccessToken) {
+            /** @var \Illuminate\Contracts\Auth\Authenticatable|AlteredByAccessToken $user */
             $user->syncAccessTokenData();
         }
 
