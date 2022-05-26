@@ -12,17 +12,17 @@ interface AlteredByAccessToken
      *
      * @param  \DigitSoft\LaravelTokenAuth\Contracts\AccessToken $accessToken
      */
-    public function setAccessToken(AccessToken $accessToken);
+    public function setAccessToken(AccessToken $accessToken): void;
 
     /**
      * Get access token.
      *
-     * @return \DigitSoft\LaravelTokenAuth\Contracts\AccessToken
+     * @return \DigitSoft\LaravelTokenAuth\Contracts\AccessToken|null
      */
-    public function getAccessToken();
+    public function getAccessToken(): ?AccessToken;
 
     /**
      * Sync data from model into token.
      */
-    public function syncAccessTokenData();
+    public function syncAccessTokenData(): void;
 }

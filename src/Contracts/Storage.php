@@ -62,5 +62,5 @@ interface Storage
      * @param  int           $user_id
      * @param  AccessToken[] $tokens
      */
-    public function setUserTokens($user_id, array $tokens = []);
+    public function setUserTokens($user_id, array $tokens = []): void;
 }

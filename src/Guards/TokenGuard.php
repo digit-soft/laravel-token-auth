@@ -5,6 +5,7 @@ namespace DigitSoft\LaravelTokenAuth\Guards;
 use Illuminate\Http\Request;
 use Illuminate\Auth\GuardHelpers;
 use Illuminate\Contracts\Auth\UserProvider;
+use Illuminate\Contracts\Auth\Authenticatable;
 use DigitSoft\LaravelTokenAuth\Contracts\Storage;
 use DigitSoft\LaravelTokenAuth\Eloquent\HasTokens;
 use DigitSoft\LaravelTokenAuth\Facades\TokenCached;
@@ -20,26 +21,26 @@ class TokenGuard implements Guard
     use GuardHelpers;
 
     /**
-     * @var Request
+     * @var \Illuminate\Http\Request
      */
-    protected $request;
+    protected Request $request;
     /**
      * @var string
      */
-    protected $inputKey;
+    protected string $inputKey;
     /**
-     * @var AccessToken
+     * @var \DigitSoft\LaravelTokenAuth\Contracts\AccessToken|null
      */
-    protected $token;
+    protected ?AccessToken $token = null;
     /**
-     * @var \Illuminate\Contracts\Auth\Authenticatable
+     * @var \Illuminate\Contracts\Auth\Authenticatable|null
      */
-    protected $lastAttempted;
+    protected ?Authenticatable $lastAttempted = null;
     /**
      * Flag, do not reset user instance on new requests. (For tests)
      * @var bool
      */
-    protected $no_reset = false;
+    protected bool $no_reset = false;
 
     /**
      * TokenGuard constructor.
@@ -48,7 +49,7 @@ class TokenGuard implements Guard
      * @param  Request      $request
      * @param  string       $inputKey
      */
-    public function __construct(UserProvider $userProvider, Request $request, $inputKey = 'api_token')
+    public function __construct(UserProvider $userProvider, Request $request, string $inputKey = 'api_token')
     {
         $this->provider = $userProvider;
         $this->request = $request;
@@ -60,7 +61,7 @@ class TokenGuard implements Guard
      *
      * @param  Request $request
      */
-    public function setRequest(Request $request)
+    public function setRequest(Request $request): void
     {
         if (! $this->no_reset && $this->request !== $request) {
             $this->reset();
@@ -71,25 +72,16 @@ class TokenGuard implements Guard
     /**
      * Get the token for the current request.
      *
-     * @return string
+     * @return string|null
      */
-    public function getTokenForRequest()
+    public function getTokenForRequest(): ?string
     {
         $token = $this->request->query($this->inputKey);
+        $token = empty($token) ? $this->request->input($this->inputKey) : $token;
+        $token = empty($token) ? $this->request->bearerToken() : $token;
+        $token = empty($token) ? $this->request->getPassword() : $token;
 
-        if (empty($token)) {
-            $token = $this->request->input($this->inputKey);
-        }
-
-        if (empty($token)) {
-            $token = $this->request->bearerToken();
-        }
-
-        if (empty($token)) {
-            $token = $this->request->getPassword();
-        }
-
-        return $token;
+        return is_string($token) ? $token : null;
     }
 
     /**
@@ -149,15 +141,9 @@ class TokenGuard implements Guard
             return $this->user;
         }
 
-        $user = null;
-        $userId = null;
-
         $token = $this->token();
-        $userId = $token !== null ? $token->user_id : null;
-
-        if ($userId !== null) {
-            $user = $this->provider->retrieveById($userId);
-        }
+        $userId = $token?->user_id;
+        $user = $userId !== null ? $this->provider->retrieveById($userId) : null;
 
         // Set access token object
         if ($token !== null && $user instanceof AlteredByAccessToken) {
@@ -197,7 +183,7 @@ class TokenGuard implements Guard
      * @param  array $credentials
      * @return bool
      */
-    public function validate(array $credentials = [])
+    public function validate(array $credentials = []): bool
     {
         $this->lastAttempted = $user = $this->provider->retrieveByCredentials($credentials);
 
@@ -207,11 +193,11 @@ class TokenGuard implements Guard
     /**
      * Determine if the user matches the credentials.
      *
-     * @param  mixed $user
+     * @param  \Illuminate\Contracts\Auth\Authenticatable|null $user
      * @param  array $credentials
      * @return bool
      */
-    protected function hasValidCredentials($user, $credentials)
+    protected function hasValidCredentials(?Authenticatable $user, array $credentials): bool
     {
         return $user !== null && $this->provider->validateCredentials($user, $credentials);
     }

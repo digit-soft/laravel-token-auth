@@ -27,63 +27,63 @@ class AccessToken implements AccessTokenContract
      *
      * @var int
      */
-    public $user_id = AccessTokenContract::USER_ID_GUEST;
+    public int $user_id = AccessTokenContract::USER_ID_GUEST;
     /**
      * Token value
      *
-     * @var string
+     * @var string|null
      */
-    public $token;
+    public ?string $token;
     /**
      * Token issued at time
      *
      * @var int|null
      */
-    public $iat;
+    public ?int $iat = null;
     /**
      * Token time to live
      *
      * @var int|null
      */
-    public $ttl;
+    public ?int $ttl = null;
     /**
      * Token expire time
      *
      * @var int|null
      */
-    public $exp;
+    public ?int $exp = null;
     /**
      * Token client ID
      *
      * @var string
      */
-    public $client_id;
+    public string $client_id;
     /**
      * Session data serialized
      *
      * @var string
      */
-    public $session;
+    public string $session;
 
     /**
      * Guarded properties
      *
      * @var array
      */
-    protected $guarded = ['session'];
+    protected array $guarded = ['session'];
     /**
      * Saved in storage or not
      *
      * @var bool
      */
-    protected $saved = false;
+    protected bool $saved = false;
 
     /**
      * Reflection for class
      *
-     * @var \ReflectionClass
+     * @var \ReflectionClass|null
      */
-    protected $_reflection;
+    protected ?\ReflectionClass $_reflection = null;
 
     /**
      * Token constructor.
@@ -107,14 +107,17 @@ class AccessToken implements AccessTokenContract
      *
      * @param  int  $ttl
      * @param  bool $overwriteTimestamps
+     * @return \DigitSoft\LaravelTokenAuth\AccessToken
      */
-    public function setTtl(int $ttl = 60, bool $overwriteTimestamps = true)
+    public function setTtl(int $ttl = 60, bool $overwriteTimestamps = true): static
     {
         $this->ttl = $ttl;
         if ($overwriteTimestamps) {
             $this->iat = now()->timestamp;
             $this->exp = $this->ttl ? $this->iat + $this->ttl : null;
         }
+
+        return $this;
     }
 
     /**
@@ -212,7 +215,7 @@ class AccessToken implements AccessTokenContract
     /**
      * @inheritdoc
      */
-    public function toJson($options = 0, $withGuarded = false)
+    public function toJson($options = 0, $withGuarded = false): string
     {
         $data = $this->toArray($withGuarded);
 
@@ -257,7 +260,7 @@ class AccessToken implements AccessTokenContract
      *
      * @return $this
      */
-    public function ensureUniqueness()
+    public function ensureUniqueness(): static
     {
         if ($this->token === null) {
             $this->token = TokenCached::generateTokenStr();
@@ -274,7 +277,7 @@ class AccessToken implements AccessTokenContract
      *
      * @param  array $config
      */
-    protected function configureSelf(array $config = [])
+    protected function configureSelf(array $config = []): void
     {
         foreach ($config as $key => $value) {
             if (property_exists($this, $key)) {
@@ -288,7 +291,7 @@ class AccessToken implements AccessTokenContract
      *
      * @return bool
      */
-    protected function needToSave()
+    protected function needToSave(): bool
     {
         return ! $this->saved || $this->isChanged();
     }
@@ -299,7 +302,7 @@ class AccessToken implements AccessTokenContract
      * @return \ReflectionClass
      * @throws null
      */
-    protected function getRef()
+    protected function getRef(): \ReflectionClass
     {
         return $this->_reflection ?? new \ReflectionClass($this);
     }

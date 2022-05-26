@@ -97,7 +97,7 @@ class Redis implements Storage
      * @param  int                   $user_id
      * @param  AccessTokenContract[] $tokens
      */
-    public function setUserTokens($user_id, array $tokens = [])
+    public function setUserTokens($user_id, array $tokens = []): void
     {
         $existingKeys = $this->getUserTokenStorageKeys($user_id);
         // Remove old [user => token] keys
@@ -231,7 +231,7 @@ class Redis implements Storage
      * @param  AccessTokenContract $token
      * @param  int|null            $ttl
      */
-    protected function addUserToken($token, $ttl = null)
+    protected function addUserToken(AccessTokenContract $token, ?int $ttl = null)
     {
         if ($token->isGuest()) {
             return;
@@ -249,7 +249,7 @@ class Redis implements Storage
      *
      * @param  AccessTokenContract $token
      */
-    protected function removeUserToken($token)
+    protected function removeUserToken(AccessTokenContract $token)
     {
         $key = $this->getUserTokenKey($token);
         $this->getConnection()->del([$key]);
