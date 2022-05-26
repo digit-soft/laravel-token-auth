@@ -33,7 +33,7 @@ class AccessToken implements AccessTokenContract
      *
      * @var string|null
      */
-    public ?string $token;
+    public ?string $token = null;
     /**
      * Token issued at time
      *
