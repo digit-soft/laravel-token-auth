@@ -138,13 +138,14 @@ class AccessTokenTest extends TestCase
     {
         $clientId = 'api-test';
         $clientIdFake = 'api-test-2';
-        config(['auth-token.client_ids' => ['api-test']]);
+        config()->set('auth-token.client_ids', ['api-test']);
         $requestGet = new Request([AccessTokenContract::REQUEST_CLIENT_ID_PARAM => $clientId]);
         $requestPost = new Request([], [AccessTokenContract::REQUEST_CLIENT_ID_PARAM => $clientId]);
         $requestPost->setMethod(Request::METHOD_POST);
         $requestHeader = new Request();
         $requestHeader->headers->set(AccessTokenContract::REQUEST_CLIENT_ID_HEADER, $clientId);
         $requestEmpty = new Request();
+        $this->resetTokenCachedFacade();
         static::assertEquals($clientId, TokenCached::getClientIdFromRequest($requestGet), 'Get client id from GET params');
         static::assertEquals($clientId, TokenCached::getClientIdFromRequest($requestPost), 'Get client id from POST params');
         static::assertEquals($clientId, TokenCached::getClientIdFromRequest($requestHeader), 'Get client id from headers');

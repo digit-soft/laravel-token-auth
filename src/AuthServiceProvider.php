@@ -57,21 +57,20 @@ class AuthServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register helper class instance
+     * Register helper class instance.
      */
-    protected function registerHelper()
+    protected function registerHelper(): void
     {
         $this->app->singleton('auth-token', function ($app) {
             return new AccessTokenHelper($app['config']);
         });
-
         $this->app->alias('auth-token', AccessTokenHelper::class);
     }
 
     /**
-     * Bind token object builder
+     * Bind token object builder.
      */
-    protected function registerTokenClass()
+    protected function registerTokenClass(): void
     {
         $this->app->bind('auth-token.token', function ($app, $params = []) {
             /** @var Application $app */
@@ -79,14 +78,13 @@ class AuthServiceProvider extends ServiceProvider
 
             return $app->make($tokenClass, $params);
         });
-
         $this->app->alias('auth-token.token', AccessTokenContract::class);
     }
 
     /**
-     * Register token store instance
+     * Register token store instance.
      */
-    protected function registerStorage()
+    protected function registerStorage(): void
     {
         // Register rebinding callback for storage
         $this->app->rebinding('auth-token.storage', function ($app, $instance) {
@@ -107,9 +105,9 @@ class AuthServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register token guard
+     * Register token guard.
      */
-    protected function registerTokenGuard()
+    protected function registerTokenGuard(): void
     {
         $this->app->bind('auth-token.guard', function ($app, $params = []) {
             /** @var Application $app */
@@ -152,7 +150,7 @@ class AuthServiceProvider extends ServiceProvider
     /**
      * Register token session handler
      */
-    public function registerSessionHandler()
+    public function registerSessionHandler(): void
     {
         $this->app->resolving('session', function ($manager) {
             /** @var SessionManager $manager */

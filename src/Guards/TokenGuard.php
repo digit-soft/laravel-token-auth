@@ -51,7 +51,7 @@ class TokenGuard implements Guard
      */
     public function __construct(UserProvider $userProvider, Request $request, string $inputKey = 'api_token')
     {
-        $this->provider = $userProvider;
+        $this->setProvider($userProvider);
         $this->request = $request;
         $this->inputKey = $inputKey;
     }
@@ -87,10 +87,10 @@ class TokenGuard implements Guard
     /**
      * Get storage instance.
      *
-     * @return Storage
+     * @return \DigitSoft\LaravelTokenAuth\Contracts\Storage
      * @throws null
      */
-    public function getStorage()
+    public function getStorage(): Storage
     {
         return app()->make(Storage::class);
     }
@@ -101,7 +101,7 @@ class TokenGuard implements Guard
      * @param array $credentials
      * @return bool
      */
-    public function once(array $credentials = [])
+    public function once(array $credentials = []): bool
     {
         /** @noinspection NotOptimalIfConditionsInspection */
         if ($this->validate($credentials) && ($user = $this->lastAttempted) !== null) {
@@ -121,7 +121,7 @@ class TokenGuard implements Guard
      * @param  \Illuminate\Contracts\Auth\Authenticatable|HasTokens $user
      * @return bool
      */
-    public function onceExternal($user)
+    public function onceExternal($user): bool
     {
         $this->lastAttempted = $user;
         $this->setUser($user);
@@ -135,7 +135,7 @@ class TokenGuard implements Guard
      *
      * @return \Illuminate\Contracts\Auth\Authenticatable|HasTokens|null
      */
-    public function user()
+    public function user(): ?Authenticatable
     {
         if ($this->user !== null) {
             return $this->user;
@@ -158,7 +158,7 @@ class TokenGuard implements Guard
      *
      * @return AccessToken|null
      */
-    public function token()
+    public function token(): ?AccessToken
     {
         if ($this->token === null && ($tokenRequest = $this->getTokenForRequest()) !== null && TokenCached::validateTokenStr($tokenRequest)) {
             $this->token = $this->getStorage()->getToken($tokenRequest);
@@ -172,7 +172,7 @@ class TokenGuard implements Guard
      *
      * @param  AccessToken $token
      */
-    public function setToken(AccessToken $token)
+    public function setToken(AccessToken $token): void
     {
         $this->token = $token;
     }
@@ -205,7 +205,7 @@ class TokenGuard implements Guard
     /**
      * Reset guard state.
      */
-    public function reset()
+    public function reset(): void
     {
         $this->token = null;
         $this->user = null;
@@ -215,7 +215,7 @@ class TokenGuard implements Guard
     /**
      * MAKE GUARD NOT `RESETable` FOR TESTS
      */
-    public function fake()
+    public function fake(): void
     {
         $this->no_reset = true;
     }

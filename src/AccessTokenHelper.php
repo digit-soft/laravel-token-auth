@@ -12,32 +12,29 @@ use DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 
 class AccessTokenHelper
 {
-    /**
-     * @var ConfigRepository
-     */
-    protected $config;
+    protected int $ttl;
+    protected int $ttlGuest;
+    protected array $clientIds;
+    protected string $clientIdDefault;
 
     public function __construct(ConfigRepository $config)
     {
-        $this->config = $config;
+        $this->configure($config);
     }
 
     /**
      * Get last added user token.
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable $user
-     * @param  string                                     $client_id
-     * @param  Contracts\Storage|null                     $storage
-     * @return Contracts\AccessToken|null
+     * @param  \Illuminate\Contracts\Auth\Authenticatable         $user
+     * @param  string|null                                        $client_id
+     * @param  \DigitSoft\LaravelTokenAuth\Contracts\Storage|null $storage
+     * @return \DigitSoft\LaravelTokenAuth\Contracts\AccessToken|null
+     * @throws null
      */
-    public function getFirstFor(Authenticatable $user, $client_id = null, Storage $storage = null)
+    public function getFirstFor(Authenticatable $user, ?string $client_id = null, ?Storage $storage = null): ?AccessTokenContract
     {
-        if ($client_id === null) {
-            $client_id = $this->getDefaultClientId();
-        }
-        if ($storage === null) {
-            $storage = app()->make(Storage::class);
-        }
+        $client_id = $client_id ?? $this->getDefaultClientId();
+        $storage = $storage ?? app()->make(Storage::class);
         $userId = $user->getAuthIdentifier();
         $list = $storage->getUserTokens($userId, true);
         if (empty($list)) {
@@ -56,11 +53,11 @@ class AccessTokenHelper
      * Create new token for user.
      *
      * @param  \Illuminate\Contracts\Auth\Authenticatable $user
-     * @param  string                                     $client_id
+     * @param  string|null                                     $client_id
      * @param  bool                                       $autoTtl
-     * @return Contracts\AccessToken
+     * @return \DigitSoft\LaravelTokenAuth\Contracts\AccessToken
      */
-    public function createFor(Authenticatable $user, $client_id = null, $autoTtl = true)
+    public function createFor(Authenticatable $user, ?string $client_id = null, bool $autoTtl = true): AccessTokenContract
     {
         if ($client_id === null) {
             $client_id = $this->getDefaultClientId();
@@ -84,9 +81,9 @@ class AccessTokenHelper
      *
      * @param  string|null $client_id
      * @param  bool        $autoTtl
-     * @return Contracts\AccessToken
+     * @return \DigitSoft\LaravelTokenAuth\Contracts\AccessToken
      */
-    public function createForGuest($client_id = null, $autoTtl = true)
+    public function createForGuest(?string $client_id = null, bool $autoTtl = true): AccessTokenContract
     {
         if ($client_id === null) {
             $client_id = $this->getDefaultClientId();
@@ -110,10 +107,10 @@ class AccessTokenHelper
      *
      * @param  array $data
      * @param  bool  $fromStorage
-     * @return Contracts\AccessToken
+     * @return \DigitSoft\LaravelTokenAuth\Contracts\AccessToken
      * @throws null
      */
-    public function createFromData($data = [], $fromStorage = false)
+    public function createFromData(array $data = [], bool $fromStorage = false): AccessTokenContract
     {
         return app()->make(AccessTokenContract::class, ['config' => $data, 'fromStorage' => $fromStorage]);
     }
@@ -122,8 +119,9 @@ class AccessTokenHelper
      * Remove all tokens for a user.
      *
      * @param  \Illuminate\Contracts\Auth\Authenticatable $user
+     * @throws null
      */
-    public function removeAllFor(Authenticatable $user)
+    public function removeAllFor(Authenticatable $user): void
     {
         if (($userId = $user->getAuthIdentifier()) === null) {
             return;
@@ -144,9 +142,9 @@ class AccessTokenHelper
      *
      * @return string
      */
-    public function getDefaultClientId()
+    public function getDefaultClientId(): string
     {
-        return $this->config->get('auth-token.client_id_default', 'api');
+        return $this->clientIdDefault;
     }
 
     /**
@@ -155,7 +153,7 @@ class AccessTokenHelper
      * @param  \Illuminate\Http\Request $request
      * @return string
      */
-    public function getClientIdFromRequest(Request $request)
+    public function getClientIdFromRequest(Request $request): string
     {
         if (($clientId = $request->input(AccessTokenContract::REQUEST_CLIENT_ID_PARAM)) !== null && $this->validateClientId($clientId)) {
             return $clientId;
@@ -173,7 +171,7 @@ class AccessTokenHelper
      * @return string
      * @throws null
      */
-    public function generateTokenStr()
+    public function generateTokenStr(): string
     {
         $randLength = config('auth-token.token_length', 60);
         $randomStr = Str::random($randLength);
@@ -195,7 +193,7 @@ class AccessTokenHelper
      * @param  string $token
      * @return bool
      */
-    public function validateTokenStr(string $token)
+    public function validateTokenStr(string $token): bool
     {
         $randLength = config('auth-token.token_length', 60);
         $hashLn = 64; //for sha256 (256/4)
@@ -215,10 +213,22 @@ class AccessTokenHelper
      * @param  string $client_id
      * @return bool
      */
-    protected function validateClientId($client_id)
+    protected function validateClientId(mixed $client_id): bool
     {
-        $ids = $this->config->get('auth-token.client_ids', [$this->getDefaultClientId()]);
+        return is_string($client_id) && in_array($client_id, $this->clientIds, true);
+    }
 
-        return in_array($client_id, $ids, true);
+    /**
+     * Configure self.
+     *
+     * @param  \Illuminate\Config\Repository $config
+     * @return void
+     */
+    protected function configure(ConfigRepository $config): void
+    {
+        $this->ttl = $config->get('auth-token.ttl');
+        $this->ttlGuest = $config->get('auth-token.ttl_guest');
+        $this->clientIdDefault = $config->get('auth-token.client_id_default');
+        $this->clientIds = $config->get('auth-token.client_ids', [$this->clientIdDefault]);
     }
 }

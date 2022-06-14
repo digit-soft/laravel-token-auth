@@ -5,8 +5,8 @@ namespace DigitSoft\LaravelTokenAuth\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Contracts\Session\Session;
 use Symfony\Component\HttpFoundation\Response;
-use Illuminate\Session\Middleware\StartSession as LaravelStartSession;
 use DigitSoft\LaravelTokenAuth\Traits\WithAuthGuardHelpersForSession;
+use Illuminate\Session\Middleware\StartSession as LaravelStartSession;
 
 class StartSession extends LaravelStartSession
 {

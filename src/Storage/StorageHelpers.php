@@ -24,9 +24,9 @@ trait StorageHelpers
      * @param  \DigitSoft\LaravelTokenAuth\Contracts\AccessToken|string $token
      * @return string
      */
-    protected function getTokenKey($token)
+    protected function getTokenKey(AccessToken|string $token): string
     {
-        return $this->getTokenKeyPrefix() . (string)$token;
+        return $this->getTokenKeyPrefix() . $token;
     }
 
     /**
@@ -35,12 +35,12 @@ trait StorageHelpers
      * @param  \DigitSoft\LaravelTokenAuth\Contracts\AccessToken[]|string[] $tokens
      * @return string[]
      */
-    protected function getTokenKeys($tokens)
+    protected function getTokenKeys(array $tokens): array
     {
         $prefix = $this->getTokenKeyPrefix();
         $keys = [];
         foreach ($tokens as $token) {
-            $keys[$token] = $prefix . (string)$token;
+            $keys[$token] = $prefix . $token;
         }
 
         return $keys;
@@ -52,7 +52,7 @@ trait StorageHelpers
      * @param  int $userId
      * @return string
      */
-    protected function getUserKey($userId)
+    protected function getUserKey($userId): string
     {
         return $this->getUserKeyPrefix() . $userId;
     }
@@ -64,11 +64,11 @@ trait StorageHelpers
      * @param  \DigitSoft\LaravelTokenAuth\Contracts\AccessToken|string $token
      * @return string
      */
-    protected function getUserTokenKey(AccessToken|string $token, $user_id = null)
+    protected function getUserTokenKey(AccessToken|string $token, $user_id = null): string
     {
         $user_id = $user_id === null && $token instanceof AccessToken ? $token->user_id : $user_id;
 
-        return $this->getUserKey($user_id) . ':' . (string)$token;
+        return $this->getUserKey($user_id) . ':' . $token;
     }
 
     /**

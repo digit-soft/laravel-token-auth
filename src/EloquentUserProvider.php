@@ -15,7 +15,7 @@ class EloquentUserProvider extends BaseEloquentUserProvider
      * Model class for a guest.
      * @var string
      */
-    protected $modelGuest;
+    protected string $modelGuest;
 
     /**
      * EloquentUserProvider constructor.
@@ -24,7 +24,7 @@ class EloquentUserProvider extends BaseEloquentUserProvider
      * @param  string                               $model
      * @param  string                               $modelGuest
      */
-    public function __construct(HasherContract $hasher, $model, $modelGuest)
+    public function __construct(HasherContract $hasher, $model, string $modelGuest)
     {
         $this->modelGuest = $modelGuest;
 

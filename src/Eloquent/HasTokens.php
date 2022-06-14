@@ -13,7 +13,7 @@ trait HasTokens
      *
      * @return AccessTokenContract[]
      */
-    public function getTokens()
+    public function getTokens(): array
     {
         $id = $this->getAuthIdentifier();
 
@@ -26,13 +26,12 @@ trait HasTokens
      * @param  string|null $client_id
      * @return AccessTokenContract
      */
-    public function getToken($client_id = null)
+    public function getToken(?string $client_id = null): AccessTokenContract
     {
         $client_id = $client_id ?? $this->getClientIdFromRequest();
         $token = TokenCached::getFirstFor($this, $client_id);
-        $token = $token ?? $this->createToken($client_id);
 
-        return $token;
+        return $token ?? $this->createToken($client_id);
     }
 
     /**
@@ -42,10 +41,10 @@ trait HasTokens
      * @param  int|null    $ttl
      * @return AccessTokenContract
      */
-    public function createToken($client_id = null, $ttl = 0)
+    public function createToken(?string $client_id = null, ?int $ttl = null): AccessTokenContract
     {
         $token = TokenCached::createFor($this, $client_id);
-        if ($ttl !== 0) {
+        if ($ttl !== null) {
             $token->setTtl($ttl);
         }
         $token->save();
@@ -56,9 +55,9 @@ trait HasTokens
     /**
      * Get token storage instance.
      *
-     * @return Storage
+     * @return \DigitSoft\LaravelTokenAuth\Contracts\Storage
      */
-    protected function getTokensStorage()
+    protected function getTokensStorage(): Storage
     {
         return app()->make(Storage::class);
     }
@@ -68,7 +67,7 @@ trait HasTokens
      *
      * @return string
      */
-    protected function getClientIdFromRequest()
+    protected function getClientIdFromRequest(): string
     {
         return TokenCached::getClientIdFromRequest(app('request'));
     }

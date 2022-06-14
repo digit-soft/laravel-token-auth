@@ -20,12 +20,14 @@ class AccessTokenCreated extends Event
     /**
      * @var \DigitSoft\LaravelTokenAuth\Contracts\AccessToken
      */
-    public $token;
+    public AccessToken $token;
 
     /**
      * AccessTokenCreated constructor.
      *
      * @param \DigitSoft\LaravelTokenAuth\Contracts\AccessToken $token
+     * @noinspection MagicMethodsValidityInspection
+     * @noinspection PhpMissingParentConstructorInspection
      */
     public function __construct(AccessToken $token)
     {

@@ -14,11 +14,7 @@ class TokenSessionHandler implements SessionHandlerInterface
 {
     use WithAuthGuardHelpersForSession;
 
-    /**
-     * App config repository
-     * @var Repository
-     */
-    protected $config;
+    protected bool $createGuestTokenAutomatically = false;
 
     /**
      * TokenSessionHandler constructor.
@@ -26,7 +22,7 @@ class TokenSessionHandler implements SessionHandlerInterface
      */
     public function __construct(Repository $config)
     {
-        $this->config = $config;
+        $this->createGuestTokenAutomatically = $config->get('auth-token.session_token_autocreate', false);
     }
 
     /**
@@ -186,6 +182,6 @@ class TokenSessionHandler implements SessionHandlerInterface
      */
     protected function shouldCreateGuestTokenWhenMissing(): bool
     {
-        return $this->config->get('auth-token.session_token_autocreate', false);
+        return $this->createGuestTokenAutomatically;
     }
 }

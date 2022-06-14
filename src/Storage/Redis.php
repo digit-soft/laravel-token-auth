@@ -16,23 +16,23 @@ class Redis implements Storage
     use StorageHelpers;
 
     /**
-     * @var RedisManager
+     * @var \Illuminate\Redis\RedisManager
      */
     protected $manager;
     /**
      * @var string|null
      */
-    protected $connection;
+    protected ?string $connection;
 
     /**
      * Redis storage constructor.
      *
-     * @param  Repository   $config
-     * @param  RedisManager $manager
+     * @param  \Illuminate\Config\Repository  $config
+     * @param  \Illuminate\Redis\RedisManager $manager
      */
     public function __construct(Repository $config, RedisManager $manager)
     {
-        $this->connection = $config->get('auth-token.connection', null);
+        $this->connection = $config->get('auth-token.connection');
         $this->manager = $manager;
     }
 
@@ -231,7 +231,7 @@ class Redis implements Storage
      * @param  AccessTokenContract $token
      * @param  int|null            $ttl
      */
-    protected function addUserToken(AccessTokenContract $token, ?int $ttl = null)
+    protected function addUserToken(AccessTokenContract $token, ?int $ttl = null): void
     {
         if ($token->isGuest()) {
             return;
@@ -249,7 +249,7 @@ class Redis implements Storage
      *
      * @param  AccessTokenContract $token
      */
-    protected function removeUserToken(AccessTokenContract $token)
+    protected function removeUserToken(AccessTokenContract $token): void
     {
         $key = $this->getUserTokenKey($token);
         $this->getConnection()->del([$key]);
@@ -262,7 +262,7 @@ class Redis implements Storage
      * @param  bool     $returnMissing
      * @return array
      */
-    protected function filterTokens(array $tokenIds, bool $returnMissing = false)
+    protected function filterTokens(array $tokenIds, bool $returnMissing = false): array
     {
         $tokenKeys = $this->getTokenKeys($tokenIds);
         $records = $this->getConnection()->mget($tokenKeys);
@@ -285,7 +285,7 @@ class Redis implements Storage
      * @param  int $user_id
      * @return array
      */
-    protected function getUserTokenStorageKeys($user_id)
+    protected function getUserTokenStorageKeys($user_id): array
     {
         $key = $this->getUserKey($user_id);
 

@@ -12,14 +12,14 @@ trait TracksPropertiesChanges
      *
      * @var array
      */
-    protected $_state = [];
+    protected array $_state = [];
 
     /**
      * Check that object properties was changed after last saved state.
      *
      * @return bool
      */
-    public function isChanged()
+    public function isChanged(): bool
     {
         $changed = $this->getChangedProperties();
 
@@ -31,7 +31,7 @@ trait TracksPropertiesChanges
      *
      * @return array
      */
-    public function getChangedProperties()
+    public function getChangedProperties(): array
     {
         if (empty($this->_state)) {
             return $this->grabPropertiesState();
@@ -51,7 +51,7 @@ trait TracksPropertiesChanges
     /**
      * Remember objects state.
      */
-    public function rememberState()
+    public function rememberState(): void
     {
         $this->_state = $this->grabPropertiesState();
     }
@@ -61,7 +61,7 @@ trait TracksPropertiesChanges
      *
      * @return bool
      */
-    public function restoreState()
+    public function restoreState(): bool
     {
         if (empty($this->_state)) {
             return false;
@@ -80,7 +80,7 @@ trait TracksPropertiesChanges
      * @return array
      * @throws null
      */
-    private function grabPropertiesState()
+    private function grabPropertiesState(): array
     {
         /** @var \ReflectionClass $ref */
         $ref = $this->getRef();

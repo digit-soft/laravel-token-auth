@@ -4,7 +4,6 @@ namespace DigitSoft\LaravelTokenAuth\Contracts;
 
 use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Contracts\Support\Arrayable;
-use DigitSoft\LaravelTokenAuth\Traits\TracksPropertiesChanges;
 
 /**
  * Interface AccessToken
@@ -17,9 +16,8 @@ use DigitSoft\LaravelTokenAuth\Traits\TracksPropertiesChanges;
  * @property int|null    $exp        Token expire time
  * @property int|null    $ttl        Token time to live
  * @property string|null $session    Token session data
- * @mixin TracksPropertiesChanges
  */
-interface AccessToken extends Jsonable, Arrayable
+interface AccessToken extends Arrayable, Jsonable, \JsonSerializable
 {
     const USER_ID_GUEST = 0;
 
@@ -29,10 +27,10 @@ interface AccessToken extends Jsonable, Arrayable
     /**
      * Set time to live for token
      *
-     * @param  int  $ttl
-     * @param  bool $overwriteTimestamps
+     * @param  int|null $ttl
+     * @param  bool     $overwriteTimestamps
      */
-    public function setTtl(int $ttl = 60, bool $overwriteTimestamps = true);
+    public function setTtl(?int $ttl = 60, bool $overwriteTimestamps = true);
 
     /**
      * Check that token was expired
@@ -98,6 +96,13 @@ interface AccessToken extends Jsonable, Arrayable
      * @return string
      */
     public function toJson($options = 0, bool $withGuarded = false): string;
+
+    /**
+     * Specify data which should be serialized to JSON.
+     *
+     * @return mixed data which can be serialized by <b>json_encode</b>, which is a value of any type other than a resource.
+     */
+    public function jsonSerialize(bool $withGuarded = false): mixed;
 
     /**
      * Get the instance as an array.

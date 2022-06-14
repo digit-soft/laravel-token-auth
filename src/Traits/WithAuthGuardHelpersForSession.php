@@ -3,6 +3,7 @@
 namespace DigitSoft\LaravelTokenAuth\Traits;
 
 use DigitSoft\LaravelTokenAuth\Contracts\TokenGuard;
+use \DigitSoft\LaravelTokenAuth\Contracts\AccessToken as AccessTokenContract;
 
 trait WithAuthGuardHelpersForSession
 {
@@ -11,7 +12,7 @@ trait WithAuthGuardHelpersForSession
      *
      * @return \DigitSoft\LaravelTokenAuth\Contracts\AccessToken|null
      */
-    protected function getToken()
+    protected function getToken(): ?AccessTokenContract
     {
         $guard = \Auth::guard();
         if (! $guard instanceof TokenGuard || ($token = $this->getTokenOrCreate($guard)) === null) {
@@ -27,10 +28,9 @@ trait WithAuthGuardHelpersForSession
      * @param  \DigitSoft\LaravelTokenAuth\Contracts\TokenGuard $guard
      * @return \DigitSoft\LaravelTokenAuth\Contracts\AccessToken|null
      */
-    protected function getTokenOrCreate(TokenGuard $guard)
+    protected function getTokenOrCreate(TokenGuard $guard): ?AccessTokenContract
     {
-        $token = $guard->token();
-        if ($token === null && $this->shouldCreateGuestTokenWhenMissing()) {
+        if (($token = $guard->token()) === null && $this->shouldCreateGuestTokenWhenMissing()) {
             $token = \TokenCached::createForGuest();
             $guard->setToken($token);
         }

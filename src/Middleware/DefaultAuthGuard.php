@@ -8,7 +8,7 @@ use Illuminate\Auth\AuthManager;
  * Class DefaultAuthGuard.
  *
  * Middleware that sets default auth guard driver on each request.
- * Feature is useful for applications, those work on top of React PHP (PHP PM)
+ * Feature is useful for applications, those work on top of React PHP (PHP PM) or Swoole
  *
  * @codeCoverageIgnore
  */
@@ -17,7 +17,7 @@ class DefaultAuthGuard
     /**
      * @var \Illuminate\Auth\AuthManager
      */
-    protected $manager;
+    protected AuthManager $manager;
 
     /**
      * DefaultAuthGuard constructor.

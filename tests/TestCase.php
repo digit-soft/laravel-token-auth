@@ -67,6 +67,7 @@ abstract class TestCase extends BaseTestCase
     {
         $object = $this->createMock(StorageContract::class);
         $object->method('setToken')->willReturn(true);
+
         return $object;
     }
 
@@ -75,15 +76,15 @@ abstract class TestCase extends BaseTestCase
      * @param int|null $id
      * @return User
      */
-    protected function createUser($id = null)
+    protected function createUser(?int $id = null)
     {
         $id = $id ?? $this->token_user_id;
-        $user = new User([
+
+        return new User([
             'id' => $id,
             'email' => $this->token_user_email,
             'password' => Hash::make($this->token_user_password),
         ]);
-        return $user;
     }
 
     /**
@@ -125,8 +126,8 @@ abstract class TestCase extends BaseTestCase
     {
         $userProvider = $userProvider ?? $this->createUserProvider();
         $request = $request ?? new Request();
-        $guard = new TokenGuard($userProvider, $request);
-        return $guard;
+
+        return new TokenGuard($userProvider, $request);
     }
 
     /**
@@ -135,8 +136,7 @@ abstract class TestCase extends BaseTestCase
      */
     protected function createUserProvider()
     {
-        $provider = new UserProvider($this->app['hash'], User::class);
-        return $provider;
+        return new UserProvider($this->app['hash'], User::class);
     }
 
     /**
@@ -146,5 +146,16 @@ abstract class TestCase extends BaseTestCase
     protected function bindStorage(\Closure $callback)
     {
         $this->app->bind('auth-token.storage', $callback);
+    }
+
+    /**
+     * Drop instance of TokenCached facade.
+     *
+     * @return void
+     */
+    protected function resetTokenCachedFacade(): void
+    {
+        app()->forgetInstance('auth-token');
+        \DigitSoft\LaravelTokenAuth\Facades\TokenCached::clearResolvedInstance('auth-token');
     }
 }

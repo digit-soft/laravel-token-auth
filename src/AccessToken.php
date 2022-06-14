@@ -105,16 +105,16 @@ class AccessToken implements AccessTokenContract
     /**
      * Set time to live for token.
      *
-     * @param  int  $ttl
-     * @param  bool $overwriteTimestamps
+     * @param  int|null $ttl
+     * @param  bool     $overwriteTimestamps
      * @return \DigitSoft\LaravelTokenAuth\AccessToken
      */
-    public function setTtl(int $ttl = 60, bool $overwriteTimestamps = true): static
+    public function setTtl(?int $ttl = 60, bool $overwriteTimestamps = true): static
     {
         $this->ttl = $ttl;
         if ($overwriteTimestamps) {
             $this->iat = now()->timestamp;
-            $this->exp = $this->ttl ? $this->iat + $this->ttl : null;
+            $this->exp = $this->ttl !== null ? $this->iat + $this->ttl : null;
         }
 
         return $this;
@@ -196,6 +196,7 @@ class AccessToken implements AccessTokenContract
      * Regenerate token.
      *
      * @param  bool $save
+     * @return bool
      */
     public function regenerate(bool $save = false): bool
     {
@@ -207,13 +208,11 @@ class AccessToken implements AccessTokenContract
         $this->ensureUniqueness();
         $this->setTtl($this->ttl, true);
 
-        if ($save) {
-            $this->save();
-        }
+        return ! $save || $this->save();
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function toJson($options = 0, $withGuarded = false): string
     {
@@ -223,7 +222,7 @@ class AccessToken implements AccessTokenContract
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function toArray(bool $withGuarded = false): array
     {
@@ -246,13 +245,21 @@ class AccessToken implements AccessTokenContract
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function jsonSerialize(bool $withGuarded = false): mixed
+    {
+        return $this->toArray($withGuarded);
+    }
+
+    /**
      * Return object string representation.
      *
      * @return string
      */
     public function __toString()
     {
-        return $this->token;
+        return (string)$this->token;
     }
 
     /**

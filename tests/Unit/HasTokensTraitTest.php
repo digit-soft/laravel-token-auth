@@ -16,12 +16,8 @@ class HasTokensTraitTest extends TestCase
     public function testGetUserTokens()
     {
         $storage = $this->createStorageMock();
-        $storage->expects($this->at(0))
-            ->method('getUserTokens')
-            ->willReturn([]);
-        $storage->expects($this->at(1))
-            ->method('getUserTokens')
-            ->willReturn([$this->createToken()]);
+        $storage->method('getUserTokens')
+            ->willReturnOnConsecutiveCalls([], [$this->createToken()]);
         $this->bindStorage(function () use ($storage) { return $storage; });
         $user = $this->createUser();
         $tokensEmpty = $user->getTokens();
@@ -33,9 +29,8 @@ class HasTokensTraitTest extends TestCase
     public function testGetUserTokenForClient()
     {
         $storage = $this->createStorageMock();
-        $storage->expects($this->at(0))
-            ->method('getUserTokens')
-            ->willReturn([$this->createToken()]);
+        $storage->method('getUserTokens')
+            ->willReturnOnConsecutiveCalls([$this->createToken()], []);
         $this->bindStorage(function () use ($storage) { return $storage; });
         $user = $this->createUser();
         $tokenFound = $user->getToken($this->token_client_id);
