@@ -14,8 +14,8 @@ use Illuminate\Support\Facades\Facade;
  * @method static void removeAllFor(\Illuminate\Contracts\Auth\Authenticatable $user)
  * @method static string getDefaultClientId()
  * @method static string getClientIdFromRequest(\Illuminate\Http\Request $request)
- * @method static string generateTokenStr()
- * @method static bool validateTokenStr(string $token)
+ * @method static string generateTokenStr(?int $stringLength = null)
+ * @method static bool validateTokenStr(string $token, ?int $stringLength = null)
  * @codeCoverageIgnore
  * @see \DigitSoft\LaravelTokenAuth\AccessTokenHelper
  */
