@@ -16,6 +16,7 @@ class AccessTokenHelper
     protected int $ttlGuest;
     protected array $clientIds;
     protected string $clientIdDefault;
+    protected int $tokenStrLength;
 
     public function __construct(ConfigRepository $config)
     {
@@ -69,7 +70,7 @@ class AccessTokenHelper
         $token = $this->createFromData($data);
         $token->ensureUniqueness();
         if ($autoTtl) {
-            $token->setTtl(config('auth-token.ttl'));
+            $token->setTtl($this->ttl);
         }
         AccessTokenCreated::dispatch($token);
 
@@ -95,7 +96,7 @@ class AccessTokenHelper
         $token = $this->createFromData($data);
         $token->ensureUniqueness();
         if ($autoTtl) {
-            $token->setTtl(config('auth-token.ttl_guest'));
+            $token->setTtl($this->ttlGuest);
         }
         AccessTokenCreated::dispatch($token);
 
@@ -168,13 +169,14 @@ class AccessTokenHelper
     /**
      * Generate random token string.
      *
+     * @param  int|null $stringLength
      * @return string
-     * @throws null
+     * @throws \Exception
      */
-    public function generateTokenStr(): string
+    public function generateTokenStr(?int $stringLength = null): string
     {
-        $randLength = config('auth-token.token_length', 60);
-        $randomStr = Str::random($randLength);
+        $stringLength = $stringLength ?? $this->tokenStrLength;
+        $randomStr = Str::random($stringLength);
         $hash = hash('sha256', $randomStr);
         $hashLn = 64; //for sha256 (256/4)
         for ($i = 0; $i < $hashLn; $i++) {
@@ -182,7 +184,7 @@ class AccessTokenHelper
                 $hash[$i] = strtoupper($hash[$i]);
             }
         }
-        $pos = ceil($randLength / 2);
+        $pos = ceil($stringLength / 2);
 
         return substr($randomStr, 0, $pos) . $hash . substr($randomStr, $pos);
     }
@@ -190,18 +192,19 @@ class AccessTokenHelper
     /**
      * Validate token string.
      *
-     * @param  string $token
+     * @param  string   $token
+     * @param  int|null $stringLength
      * @return bool
      */
-    public function validateTokenStr(string $token): bool
+    public function validateTokenStr(string $token, ?int $stringLength = null): bool
     {
-        $randLength = config('auth-token.token_length', 60);
+        $stringLength = $stringLength ?? $this->tokenStrLength;
         $hashLn = 64; //for sha256 (256/4)
-        if (strlen($token) !== ($randLength + $hashLn)) {
+        if (strlen($token) !== ($stringLength + $hashLn)) {
             return false;
         }
-        $pos = ceil($randLength / 2);
-        $randStr = substr($token, 0, $pos) . substr($token, -($randLength - $pos));
+        $pos = ceil($stringLength / 2);
+        $randStr = substr($token, 0, $pos) . substr($token, -($stringLength - $pos));
         $hash = strtolower(substr($token, $pos, $hashLn));
 
         return hash('sha256', $randStr) === $hash;
@@ -230,5 +233,10 @@ class AccessTokenHelper
         $this->ttlGuest = $config->get('auth-token.ttl_guest');
         $this->clientIdDefault = $config->get('auth-token.client_id_default');
         $this->clientIds = $config->get('auth-token.client_ids', [$this->clientIdDefault]);
+        $this->tokenStrLength = $config->get('auth-token.token_length', 60);
+        // Validate length of token random string part
+        if ($this->tokenStrLength % 2 !== 0) {
+            throw new \InvalidArgumentException('Token length should be an even number.');
+        }
     }
 }
