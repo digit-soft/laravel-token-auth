@@ -30,7 +30,7 @@ interface AccessToken extends Arrayable, Jsonable, \JsonSerializable
      * @param  int|null $ttl
      * @param  bool     $overwriteTimestamps
      */
-    public function setTtl(?int $ttl = 60, bool $overwriteTimestamps = true);
+    public function setTtl(?int $ttl = 60, bool $overwriteTimestamps = true): static;
 
     /**
      * Check that token was expired

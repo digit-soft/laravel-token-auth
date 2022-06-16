@@ -171,7 +171,7 @@ class AccessTokenHelper
      *
      * @param  int|null $stringLength
      * @return string
-     * @throws \Exception
+     * @throws null
      */
     public function generateTokenStr(?int $stringLength = null): string
     {
