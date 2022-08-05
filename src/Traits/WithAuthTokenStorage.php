@@ -2,22 +2,24 @@
 
 namespace DigitSoft\LaravelTokenAuth\Traits;
 
+use DigitSoft\LaravelTokenAuth\Contracts\Storage;
+
 trait WithAuthTokenStorage
 {
     /**
      * Storage instance.
      *
-     * @var \DigitSoft\LaravelTokenAuth\Contracts\Storage
+     * @var \DigitSoft\LaravelTokenAuth\Contracts\Storage|null
      */
-    public static $_authTokenStorageInstance;
+    public static ?Storage $_authTokenStorageInstance = null;
 
     /**
      * Get tokens storage instance.
      *
-     * @return \DigitSoft\LaravelTokenAuth\Storage\Redis|\Illuminate\Contracts\Foundation\Application|mixed
+     * @return \DigitSoft\LaravelTokenAuth\Contracts\Storage|\DigitSoft\LaravelTokenAuth\Storage\Redis
      */
-    public static function tokenStorage()
+    public static function tokenStorage(): Storage
     {
-        return WithAuthTokenStorage::$_authTokenStorageInstance ?? WithAuthTokenStorage::$_authTokenStorageInstance = app('auth-token.storage');
+        return static::$_authTokenStorageInstance ?? static::$_authTokenStorageInstance = app('auth-token.storage');
     }
 }
