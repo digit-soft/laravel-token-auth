@@ -34,7 +34,7 @@ class TokenSessionHandler implements SessionHandlerInterface
      * </p>
      * @since 5.4.0
      */
-    public function close()
+    public function close(): bool
     {
         return true;
     }
@@ -49,7 +49,7 @@ class TokenSessionHandler implements SessionHandlerInterface
      * </p>
      * @since 5.4.0
      */
-    public function destroy($id)
+    public function destroy($id): bool
     {
         return $this->saveSessionData(null);
     }
@@ -67,9 +67,9 @@ class TokenSessionHandler implements SessionHandlerInterface
      * </p>
      * @since 5.4.0
      */
-    public function gc($max_lifetime)
+    public function gc($max_lifetime): int|false
     {
-        return true;
+        return 1;
     }
 
     /**
@@ -83,7 +83,7 @@ class TokenSessionHandler implements SessionHandlerInterface
      * </p>
      * @since 5.4.0
      */
-    public function open($path, $name)
+    public function open($path, $name): bool
     {
         return true;
     }
@@ -99,14 +99,14 @@ class TokenSessionHandler implements SessionHandlerInterface
      * </p>
      * @since 5.4.0
      */
-    public function read($id)
+    public function read($id): string|false
     {
         $token = $this->getToken();
         if ($token !== null) {
             return $token->session;
         }
 
-        return '';
+        return false;
     }
 
     /**
@@ -126,7 +126,7 @@ class TokenSessionHandler implements SessionHandlerInterface
      * </p>
      * @since 5.4.0
      */
-    public function write($id, $data)
+    public function write($id, $data): bool
     {
         return $this->saveSessionData(
             $this->cleanupSessionData($data)
@@ -139,7 +139,7 @@ class TokenSessionHandler implements SessionHandlerInterface
      * @param  string|null $data
      * @return bool
      */
-    protected function saveSessionData($data)
+    protected function saveSessionData($data): bool
     {
         $token = $this->getToken();
         if ($token !== null && $token->session !== $data) {
