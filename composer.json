@@ -3,7 +3,7 @@
     "description": "Laravel token auth cached.",
     "keywords": ["laravel token auth", "auth", "tokens", "stateless auth"],
     "license": "MIT",
-    "version": "2.3.1",
+    "version": "2.3.2",
     "authors": [
         {
             "name": "Digit",

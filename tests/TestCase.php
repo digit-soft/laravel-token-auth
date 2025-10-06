@@ -122,7 +122,7 @@ abstract class TestCase extends BaseTestCase
      * @param UserProvider|null $userProvider
      * @return TokenGuard
      */
-    protected function createGuard(Request $request = null, UserProvider $userProvider = null)
+    protected function createGuard(?Request $request = null, ?UserProvider $userProvider = null)
     {
         $userProvider = $userProvider ?? $this->createUserProvider();
         $request = $request ?? new Request();
