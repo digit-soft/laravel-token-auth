@@ -3,7 +3,7 @@
     "description": "Laravel token auth cached.",
     "keywords": ["laravel token auth", "auth", "tokens", "stateless auth"],
     "license": "MIT",
-    "version": "2.3.2",
+    "version": "2.3.3",
     "authors": [
         {
             "name": "Digit",
@@ -11,8 +11,8 @@
         }
     ],
     "require": {
-        "php": "^8.0",
-        "laravel/framework": "^7.30.6||^8.75||^9.1.9||^10.0||^11.0||^12.0"
+        "php": "^8.1",
+        "laravel/framework": "^7.30.6||^8.75||^9.1.9||^10.0||^11.0||^12.0||^13.0"
     },
     "autoload": {
         "psr-4": {
